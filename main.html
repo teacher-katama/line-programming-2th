@@ -1,0 +1,1789 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>線性規劃 互動講義</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chiron+GoRound+TC:wght@500;700;800&family=IBM+Plex+Mono:wght@500&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<script>
+window.MathJax = {
+  tex: { inlineMath: [['\\(', '\\)']], displayMath: [['\\[', '\\]']] },
+  svg: { fontCache: 'global' },
+  options: { enableMenu: false }
+};
+</script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg.js"></script>
+<style>
+/* Layout concept: a graph-paper handout. One column of numbered chapter sections,
+   worked examples as cards with a figure beside the solution, live plots where
+   the reader drags the objective line across the feasible region. */
+:root {
+  --bg: #F1F6F9;
+  --surface: #FFFFFF;
+  --surface2: #E6EFF4;
+  --ink: #10212C;
+  --muted: #52656F;
+  --rule: #C9D9E2;
+  --grid: #D5E7F1;
+  --brand: #0B7A85;
+  --brand-ink: #075760;
+  --on-brand: #FFFFFF;
+  --region: #7EC8E3;
+  --obj: #E4570F;
+  --hl: #FFF1BF;
+  --c1: #2563C9;
+  --c2: #1C9A62;
+  --c3: #E08A00;
+  --c4: #D63B3B;
+  --c5: #7A4BC2;
+  --fd: "Chiron GoRound TC", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  --fb: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", "Heiti TC", sans-serif;
+  --fm: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0D1920;
+    --surface: #14252E;
+    --surface2: #1B3340;
+    --ink: #E5EEF3;
+    --muted: #9DB0BB;
+    --rule: #2B4553;
+    --grid: #23404E;
+    --brand: #4FC3CC;
+    --brand-ink: #8EDDE3;
+    --on-brand: #06242A;
+    --region: #2F86A8;
+    --obj: #FF8A4C;
+    --hl: #4A3F14;
+    --c1: #6FA1FF;
+    --c2: #4FD08F;
+    --c3: #F2AE3B;
+    --c4: #FF7A7A;
+    --c5: #B494F0;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0D1920;
+  --surface: #14252E;
+  --surface2: #1B3340;
+  --ink: #E5EEF3;
+  --muted: #9DB0BB;
+  --rule: #2B4553;
+  --grid: #23404E;
+  --brand: #4FC3CC;
+  --brand-ink: #8EDDE3;
+  --on-brand: #06242A;
+  --region: #2F86A8;
+  --obj: #FF8A4C;
+  --hl: #4A3F14;
+  --c1: #6FA1FF;
+  --c2: #4FD08F;
+  --c3: #F2AE3B;
+  --c4: #FF7A7A;
+  --c5: #B494F0;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 84px; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font: 400 16px/1.85 var(--fb);
+  padding-inline: 16px;
+  padding-block: 0 72px;
+}
+.page { max-width: 980px; margin-inline: auto; }
+h1, h2, h3, h4 { font-family: var(--fd); text-wrap: balance; line-height: 1.35; margin: 0; }
+p { margin: 0 0 .9em; }
+ul, ol { margin: 0 0 .9em; padding-left: 1.4em; }
+a { color: var(--brand-ink); }
+strong { font-weight: 700; }
+:focus-visible { outline: 3px solid var(--obj); outline-offset: 2px; }
+mjx-container[jax="SVG"] { color: inherit; }
+mjx-container[jax="SVG"][display="true"] { margin: .6em 0 !important; overflow-x: auto; overflow-y: hidden; max-width: 100%; }
+
+/* nav */
+.nav {
+  position: sticky;
+  top: calc(env(safe-area-inset-top, 0px) + 8px);
+  z-index: 30;
+  display: flex; align-items: center; gap: 8px;
+  margin-block: 12px 0;
+  padding: 6px 8px 6px 10px;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+}
+.nav-links { display: flex; gap: 2px; overflow-x: auto; flex: 1; min-width: 0; scrollbar-width: none; }
+.nav-links::-webkit-scrollbar { display: none; }
+.nav-links a {
+  white-space: nowrap; text-decoration: none; color: var(--muted);
+  font-size: .88rem; font-weight: 500; padding: 4px 12px; border-radius: 999px;
+}
+.nav-links a:hover { color: var(--ink); background: var(--surface2); }
+.nav-links a.on { color: var(--on-brand); background: var(--brand); }
+.btn {
+  font: 500 .85rem/1 var(--fb); white-space: nowrap;
+  padding: 8px 14px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--brand); color: var(--brand-ink); background: transparent;
+}
+.btn:hover { background: var(--brand); color: var(--on-brand); }
+
+/* hero */
+.hero {
+  margin-top: 16px;
+  display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: 20px; align-items: center;
+  padding: 28px 28px 24px;
+  border: 1px solid var(--rule); border-radius: 20px;
+  background-color: var(--surface);
+  background-image:
+    linear-gradient(to right, var(--grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+.eyebrow { font: 500 .8rem var(--fm); letter-spacing: .14em; color: var(--brand-ink); margin: 0 0 10px; }
+.hero h1 { font-weight: 800; font-size: clamp(2.8rem, 9vw, 4.6rem); letter-spacing: .04em; }
+.lede { font-size: 1.05rem; max-width: 30em; margin-top: 12px; }
+.topics { list-style: none; padding: 0; margin: 14px 0 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.topics li { background: var(--surface); border: 1px solid var(--rule); border-radius: 999px; padding: 2px 14px; font-size: .9rem; }
+.hero-art { width: 100%; height: auto; display: block; }
+
+/* generic sections */
+.sec { margin-top: 56px; }
+.kicker { font: 500 .8rem var(--fm); letter-spacing: .14em; color: var(--brand-ink); margin: 0 0 6px; }
+.sec > h2, .sec-h { font-size: clamp(1.55rem, 4.6vw, 2.1rem); font-weight: 800; display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+.badge {
+  flex: none; width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center;
+  background: var(--brand); color: var(--on-brand); font: 800 1.6rem var(--fd);
+}
+h3 { font-size: 1.2rem; font-weight: 700; }
+.sub-h { font-size: 1.15rem; font-weight: 700; margin: 36px 0 10px; color: var(--brand-ink); }
+
+/* goals */
+.goals { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); gap: 12px; }
+.goals li { background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; padding: 14px 16px; line-height: 1.7; font-size: .95rem; }
+.goals b { display: block; font: 500 .75rem var(--fm); letter-spacing: .12em; color: var(--brand-ink); margin-bottom: 4px; }
+
+/* formula / note blocks */
+.formula, .note {
+  background: var(--surface2); border-radius: 12px; padding: 14px 18px; margin: 16px 0;
+}
+.formula { border: 1.5px solid var(--brand); background: color-mix(in srgb, var(--brand) 9%, var(--surface)); }
+.flabel { display: inline-block; font: 500 .72rem var(--fm); letter-spacing: .14em; color: var(--on-brand); background: var(--brand); border-radius: 4px; padding: 0 8px; margin-right: 8px; line-height: 1.7; }
+.note .flabel { background: var(--obj); color: #fff; }
+:root[data-theme="dark"] .note .flabel { color: #2A1000; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .note .flabel { color: #2A1000; } }
+.defs { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 12px; margin: 16px 0; }
+.def { background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; padding: 12px 16px; }
+.def h4 { font-size: 1rem; color: var(--brand-ink); margin-bottom: 4px; }
+.def p { margin: 0; font-size: .93rem; line-height: 1.7; }
+
+/* example + practice cards */
+.ex { background: var(--surface); border: 1px solid var(--rule); border-radius: 16px; margin-block: 26px; overflow: hidden; }
+.ex-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 14px; padding: 12px 20px; background: var(--surface2); border-bottom: 1px solid var(--rule); }
+.tag { font: 500 .88rem var(--fm); letter-spacing: .1em; color: var(--brand-ink); }
+.ex-head h3 { font-size: 1.05rem; }
+.prob { padding: 16px 20px 6px; }
+.prob p:last-child { margin-bottom: 8px; }
+.ex.pr { border: 1.5px dashed var(--brand); }
+.ex.pr .ex-head { background: transparent; border-bottom: 1.5px dashed var(--brand); }
+.ex.hw .ex-head { background: transparent; }
+.split { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 24px; align-items: start; }
+.split > .figcol { max-width: 100%; }
+details.sol { border-top: 1px solid var(--rule); }
+details.sol > summary {
+  list-style: none; cursor: pointer; padding: 12px 20px; font: 700 .95rem var(--fd); color: var(--brand-ink);
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; user-select: none;
+}
+details.sol > summary::-webkit-details-marker { display: none; }
+details.sol > summary::after { content: "展開"; font: 500 .8rem var(--fb); color: var(--muted); }
+details.sol[open] > summary::after { content: "收合"; }
+details.sol > summary:hover { background: color-mix(in srgb, var(--brand) 8%, transparent); }
+.sol-body { padding: 4px 20px 20px; }
+.steps { list-style: none; counter-reset: st; padding: 0; margin: 0 0 .9em; }
+.steps > li { counter-increment: st; position: relative; padding-left: 38px; margin-bottom: .7em; }
+.steps > li::before {
+  content: counter(st); position: absolute; left: 0; top: .3em; width: 26px; height: 26px; border-radius: 50%;
+  display: grid; place-items: center; font: 500 .8rem/1 var(--fm); background: var(--brand); color: var(--on-brand);
+}
+.ans { background: var(--hl); border-radius: 10px; padding: 10px 14px; font-weight: 700; margin: 10px 0 4px; }
+.aside { color: var(--muted); font-size: .92rem; border-top: 1px dashed var(--rule); padding-top: 8px; margin-top: 12px; }
+.tbl-wrap { overflow-x: auto; margin: 10px 0 14px; max-width: 100%; }
+table.vt { border-collapse: collapse; min-width: 280px; text-align: center; font-size: .95rem; }
+table.vt th, table.vt td { border: 1px solid var(--rule); padding: 6px 14px; }
+table.vt th { background: var(--surface2); font-weight: 500; }
+table.vt tr.best td { background: var(--hl); font-weight: 700; }
+table.vt caption { caption-side: top; text-align: left; font: 500 .8rem var(--fm); letter-spacing: .08em; color: var(--muted); padding-bottom: 4px; }
+
+/* figures */
+.figcol { min-width: 0; }
+.fig { margin: 0; background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; padding: 8px 8px 6px; }
+.fig svg { display: block; max-width: 100%; height: auto; margin-inline: auto; }
+.fig figcaption { font-size: .82rem; color: var(--muted); text-align: center; line-height: 1.5; padding: 4px 4px 2px; }
+.fig-row { display: flex; flex-wrap: wrap; gap: 12px; margin: 14px 0; }
+.fig-row .fig { flex: 1 1 190px; min-width: 0; }
+.legend { list-style: none; margin: 6px 0 2px; padding: 0; display: flex; flex-wrap: wrap; gap: 2px 14px; justify-content: center; font-size: .85rem; line-height: 1.6; }
+.legend li { display: inline-flex; align-items: center; gap: 6px; }
+.legend .sw { display: inline-block; width: 22px; height: 0; border-top: 3px solid var(--c, var(--ink)); }
+.legend .sw.d { border-top-style: dashed; }
+.legend .rg { display: inline-block; width: 14px; height: 14px; border-radius: 3px; background: var(--region); opacity: .7; }
+.g-grid { stroke: var(--grid); stroke-width: 1; }
+.g-axis { stroke: var(--ink); stroke-width: 1.3; }
+.g-tick { fill: var(--muted); font: 500 10.5px var(--fm); }
+.g-lab { fill: var(--ink); font: 500 12.5px var(--fb); paint-order: stroke; stroke: var(--surface); stroke-width: 3.5px; stroke-linejoin: round; }
+.g-name { fill: var(--ink); font: 500 13px var(--fb); }
+.g-pt { stroke: var(--surface); stroke-width: 1.4; }
+
+/* live widgets */
+.lp, .tool {
+  background: var(--surface); border: 1px solid var(--rule); border-radius: 16px; padding: 14px; margin: 18px 0;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 14px 22px; align-items: start;
+}
+.lp-fig, .tool-fig { min-width: 0; }
+.lp-ctl, .tool-ctl { min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+.tool-title { font: 700 .95rem var(--fd); color: var(--brand-ink); }
+.readout { background: var(--surface2); border-radius: 12px; padding: 10px 14px; font-size: .95rem; line-height: 1.7; }
+.readout .big { display: block; font: 700 1.35rem/1.4 var(--fd); }
+.readout .big i, .readout i { font-family: "Times New Roman", Times, serif; }
+.readout .st { display: block; color: var(--muted); font-size: .9rem; }
+.readout .st.ok { color: var(--c2); font-weight: 700; }
+.readout .st.hit { color: var(--obj); font-weight: 700; }
+.slider-row label { display: block; font-size: .88rem; color: var(--muted); margin-bottom: 4px; }
+input[type="range"] { width: 100%; accent-color: var(--obj); height: 28px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips-h { font-size: .85rem; color: var(--muted); margin: 0 0 4px; }
+.chip {
+  font: 500 .8rem/1.2 var(--fm); padding: 6px 10px; border-radius: 999px; cursor: pointer;
+  background: var(--surface); color: var(--ink); border: 1px solid var(--rule);
+}
+.chip:hover { border-color: var(--brand); }
+.chip[aria-pressed="true"] { background: var(--brand); color: var(--on-brand); border-color: var(--brand); }
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.num, .sel {
+  font: 500 .95rem var(--fm); padding: 5px 6px; border: 1px solid var(--rule); border-radius: 8px;
+  background: var(--surface); color: var(--ink);
+}
+.num { width: 4.4em; text-align: center; }
+.ineq-row { padding: 8px 10px; border: 1px solid var(--rule); border-radius: 12px; display: flex; flex-direction: column; gap: 6px; }
+.ineq-row .why { font-size: .86rem; color: var(--muted); line-height: 1.6; }
+.ineq-row label.on { display: inline-flex; align-items: center; gap: 6px; font-size: .85rem; color: var(--muted); }
+.swatch { display: inline-block; width: 12px; height: 12px; border-radius: 3px; background: var(--c); }
+
+footer.foot { margin-top: 64px; padding-top: 16px; border-top: 1px solid var(--rule); color: var(--muted); font-size: .88rem; }
+.sum-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 12px; margin: 14px 0; }
+.sum-list .def p { font-size: .95rem; }
+
+@media (max-width: 760px) {
+  .hero { grid-template-columns: minmax(0, 1fr); padding: 20px 18px; }
+  .split { grid-template-columns: minmax(0, 1fr); }
+  .sol-body, .prob, .ex-head { padding-inline: 16px; }
+  details.sol > summary { padding-inline: 16px; }
+  .btn { padding: 8px 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
+</style>
+<div class="page">
+
+<nav class="nav" aria-label="章節導覽">
+  <div class="nav-links">
+    <a href="#intro">引言</a>
+    <a href="#s1">平行直線系</a>
+    <a href="#s2">二元一次不等式</a>
+    <a href="#s3">線性規劃</a>
+    <a href="#hw">習題 1</a>
+    <a href="#sum">小結</a>
+  </div>
+  <button type="button" class="btn" id="toggleAll" aria-pressed="false">展開全部解答</button>
+</nav>
+
+<header class="hero">
+  <div>
+    <p class="eyebrow">選修數學乙（下）　第 1 章</p>
+    <h1>線性規劃</h1>
+    <p class="lede">生活與科技中，常常要在限制條件之下求某個量的最大值或最小值。先把條件畫成可行解區域，再讓一條直線平行移動，就能找到最佳解。</p>
+    <ul class="topics">
+      <li>平行直線系</li>
+      <li>二元一次不等式</li>
+      <li>線性規劃</li>
+    </ul>
+  </div>
+  <svg class="hero-art" viewBox="0 0 360 280" role="img" aria-label="五邊形的可行解區域，三條平行的虛線掃過區域，最右上方的一條剛好碰到頂點">
+    <g class="g-grid">
+      <path d="M30 20V260M70 20V260M110 20V260M150 20V260M190 20V260M230 20V260M270 20V260M310 20V260"/>
+      <path d="M20 40H340M20 80H340M20 120H340M20 160H340M20 200H340M20 240H340"/>
+    </g>
+    <path class="g-axis" d="M30 260H344M30 260V12" fill="none"/>
+    <polygon points="30,240 190,240 270,150 220,60 30,60" fill="var(--region)" fill-opacity=".55" stroke="var(--ink)" stroke-width="1.6" stroke-linejoin="round"/>
+    <g stroke="var(--obj)" stroke-width="2.2" stroke-dasharray="7 6" fill="none">
+      <path d="M96 258L316 38" opacity=".45"/>
+      <path d="M126 258L346 38" opacity=".7"/>
+    </g>
+    <path d="M60 258L326 -8" stroke="var(--obj)" stroke-width="2.6" fill="none" transform="translate(48 0)"/>
+    <circle cx="270" cy="150" r="6" fill="var(--obj)" stroke="var(--surface)" stroke-width="2"/>
+    <circle cx="190" cy="240" r="4.5" fill="var(--ink)"/>
+    <circle cx="220" cy="60" r="4.5" fill="var(--ink)"/>
+    <circle cx="30" cy="240" r="4.5" fill="var(--ink)"/>
+    <circle cx="30" cy="60" r="4.5" fill="var(--ink)"/>
+  </svg>
+</header>
+
+<section id="goals" class="sec" style="margin-top:40px">
+  <p class="kicker">學習目標</p>
+  <ul class="goals">
+    <li><b>GOAL 1</b>能由常數項的改變，判斷平行直線系中直線的位置與截距。</li>
+    <li><b>GOAL 2</b>能畫出二元一次不等式與聯立不等式的圖形，分辨實線與虛線。</li>
+    <li><b>GOAL 3</b>能說明可行解、可行解區域、目標函數與最佳解的意義。</li>
+    <li><b>GOAL 4</b>能用平行線法與頂點法求最大值、最小值，並解決應用問題。</li>
+  </ul>
+  <p style="margin-top:14px;color:var(--muted);font-size:.95rem">線性規劃在經濟學、商業、管理與作業研究中有大量應用，例如物流路線設計與商品庫存，都可以用它來描述並求解。</p>
+</section>
+
+<section id="intro" class="sec">
+  <p class="kicker">先看一個問題</p>
+  <h2 class="sec-h" style="margin-bottom:10px">學期成績最多能拿幾分？</h2>
+  <p>數學老師計算學期成績的方法是：平時成績（\(x\)）占 30%，段考成績（\(y\)）占 70%。已知小毅的平時成績加上段考成績（\(x+y\)）不超過 150 分，那麼學期成績最多可能有幾分？</p>
+  <p>這類「在某些條件下求某個量的最大值或最小值」的問題，日常生活中常常碰到。整理題意，條件與要求的量是：</p>
+  <div class="formula">
+    <span class="flabel">題意</span>在 \(0\le x\le 100,\ 0\le y\le 100,\ x+y\le 150\) 的條件下，求 \(0.3x+0.7y\) 的最大值。
+  </div>
+  <p>這正是本章要介紹的「線性規劃」。下面的圖先讓你預覽：拖曳目標函數的值，看看那條橘色虛線什麼時候剛好離開區域。</p>
+  <div data-lp="intro"></div>
+  <details class="sol" style="border:1px solid var(--rule);border-radius:12px">
+    <summary>預覽的答案</summary>
+    <div class="sol-body">
+      <p>可行解區域是五邊形，頂點為 \((0,0)\)、\((100,0)\)、\((100,50)\)、\((50,100)\)、\((0,100)\)。代入 \(0.3x+0.7y\)，依序得 \(0,\ 30,\ 65,\ 85,\ 70\)。</p>
+      <p class="ans">在 \((x,y)=(50,100)\) 時，學期成績最大，為 85 分。</p>
+      <p class="aside">本章先複習平行直線、二元一次不等式，再回頭說明為什麼只需要檢查頂點。</p>
+    </div>
+  </details>
+</section>
+
+<!-- ===================== 1 平行直線系 ===================== -->
+<section id="s1" class="sec">
+  <h2 class="sec-h"><span class="badge">1</span>平行直線系</h2>
+  <p>第一冊學過：兩直線的斜率相等且相異，就一定平行；直線平移只會改變位置，不會改變斜率。因此把一條直線平移，會得到一系列互相平行的直線，這些直線稱為<strong>平行直線系</strong>。</p>
+  <div class="formula">
+    <span class="flabel">重點</span>直線 \(L:\ ax+by+c=0\ (b\ne 0)\) 的斜率為 \(-\dfrac{a}{b}\)。維持 \(x,y\) 的係數 \(a,b\) 不變，只改變常數項，就得到一系列斜率相等、位置不同的直線，也就是平行直線系。
+  </div>
+  <p>例如 \(L_n:\ x+y-n=0\)（\(n=1,2,3,\dots\)）：直線 \(L_1\) 往上方平行移動，得到 \(L_2,L_3,\dots,L_n\)，它們的 \(x\) 截距與 \(y\) 截距都愈來愈大。截距的變化，和常數項的改變有直接的關係。</p>
+
+  <div data-tool="family"></div>
+
+  <article class="ex" id="ex1">
+    <div class="ex-head"><span class="tag">例題 1</span><h3>向右平移直線</h3></div>
+    <div class="prob">
+      <p>設 \(L_0\) 的方程式為 \(x-y=0\)，將直線 \(L_0\) 分別向右平移 1 單位、2 單位、3 單位，得直線 \(L_1\)、\(L_2\)、\(L_3\)。試在坐標平面上畫出直線 \(L_1,L_2,L_3\)，並求其方程式。</p>
+    </div>
+    <details class="sol" open>
+      <summary>解</summary>
+      <div class="sol-body split">
+        <div>
+          <ol class="steps">
+            <li>直線 \(L_0\) 是過原點 \(O(0,0)\) 且斜率為 1 的直線。</li>
+            <li>平移不改變斜率，所以 \(L_1,L_2,L_3\) 的斜率都是 1。向右平移 1、2、3 單位，原點分別移到 \((1,0)\)、\((2,0)\)、\((3,0)\)。</li>
+            <li>直線 \(L_1\) 過 \((1,0)\) 且斜率為 1，方程式為 \(x-y=1\)；直線 \(L_2\) 過 \((2,0)\) 且斜率為 1，方程式為 \(x-y=2\)；直線 \(L_3\) 過 \((3,0)\) 且斜率為 1，方程式為 \(x-y=3\)。</li>
+          </ol>
+          <p class="ans">\(L_1: x-y=1,\quad L_2: x-y=2,\quad L_3: x-y=3\)</p>
+          <p class="aside">另一種看法：向右平移 \(h\) 單位，就是把 \(x\) 換成 \(x-h\)，得 \((x-h)-y=0\)，也就是 \(x-y=h\)。</p>
+        </div>
+        <div class="figcol" data-fig="ex1"></div>
+      </div>
+    </details>
+  </article>
+
+  <article class="ex pr" id="pr1">
+    <div class="ex-head"><span class="tag">隨堂練習</span><h3>向左平移直線</h3></div>
+    <div class="prob">
+      <p>承例題 1，將直線 \(L_0\) 分別向左平移 1 單位、2 單位、3 單位，得直線 \(L_4\)、\(L_5\)、\(L_6\)。試在坐標平面上畫出直線 \(L_4,L_5,L_6\)，並求其方程式。</p>
+    </div>
+    <details class="sol">
+      <summary>解答</summary>
+      <div class="sol-body split">
+        <div>
+          <ol class="steps">
+            <li>向左平移 1、2、3 單位，原點分別移到 \((-1,0)\)、\((-2,0)\)、\((-3,0)\)，斜率仍為 1。</li>
+            <li>向左平移 \(h\) 單位，是把 \(x\) 換成 \(x+h\)，得 \((x+h)-y=0\)，即 \(x-y=-h\)。</li>
+          </ol>
+          <p class="ans">\(L_4: x-y=-1,\quad L_5: x-y=-2,\quad L_6: x-y=-3\)</p>
+          <p class="aside">與例題 1 合起來看：\(x-y=c\) 中，\(c\) 為正，直線在 \(L_0\) 的右下方；\(c\) 為負，直線在 \(L_0\) 的左上方。</p>
+        </div>
+        <div class="figcol" data-fig="pr1"></div>
+      </div>
+    </details>
+  </article>
+
+  <article class="ex" id="ex2">
+    <div class="ex-head"><span class="tag">例題 2</span><h3>比較 \(x\) 截距</h3></div>
+    <div class="prob">
+      <p>已知坐標平面上有三直線 \(L_1: 2x+y=2\)，\(L_2: 2x+y=4\)，\(L_3: 2x+y=6\)。設直線 \(L_1,L_2,L_3\) 與 \(x\) 軸的交點分別為 \((a_1,0)\)、\((a_2,0)\)、\((a_3,0)\)，試比較 \(a_1,a_2,a_3\) 的大小關係。</p>
+    </div>
+    <details class="sol" open>
+      <summary>解</summary>
+      <div class="sol-body split">
+        <div>
+          <ol class="steps">
+            <li>三條直線的 \(x,y\) 係數相同，只有常數項不同，所以是平行直線系。</li>
+            <li>與 \(x\) 軸相交，令 \(y=0\)：\(L_1\) 得 \(2x=2\)，\(a_1=1\)；\(L_2\) 得 \(2x=4\)，\(a_2=2\)；\(L_3\) 得 \(2x=6\)，\(a_3=3\)。</li>
+          </ol>
+          <p class="ans">\(a_1&lt; a_2&lt; a_3\)</p>
+          <p class="aside">常數項愈大，直線愈往右上方，\(x\) 截距也愈大。</p>
+        </div>
+        <div class="figcol" data-fig="ex2"></div>
+      </div>
+    </details>
+  </article>
+
+  <article class="ex pr" id="pr2">
+    <div class="ex-head"><span class="tag">隨堂練習</span><h3>比較 \(y\) 截距</h3></div>
+    <div class="prob">
+      <p>承例題 2，設直線 \(L_1,L_2,L_3\) 與 \(y\) 軸的交點分別為 \((0,b_1)\)、\((0,b_2)\)、\((0,b_3)\)，試比較 \(b_1,b_2,b_3\) 的大小關係。</p>
+    </div>
+    <details class="sol">
+      <summary>解答</summary>
+      <div class="sol-body split">
+        <div>
+          <ol class="steps">
+            <li>與 \(y\) 軸相交，令 \(x=0\)。</li>
+            <li>\(L_1\) 得 \(y=2\)，\(b_1=2\)；\(L_2\) 得 \(y=4\)，\(b_2=4\)；\(L_3\) 得 \(y=6\)，\(b_3=6\)。</li>
+          </ol>
+          <p class="ans">\(b_1&lt; b_2&lt; b_3\)</p>
+        </div>
+        <div class="figcol" data-fig="pr2"></div>
+      </div>
+    </details>
+  </article>
+</section>
+
+<!-- ===================== 2 二元一次不等式 ===================== -->
+<section id="s2" class="sec">
+  <h2 class="sec-h"><span class="badge">2</span>二元一次不等式</h2>
+  <p>第一冊已經介紹過二元一次不等式及其圖形。例如 \(x+y=2\) 的圖形是直線 \(L\)；\(x+y&gt;2\) 的圖形是 \(L\) 右上方的半平面 \(E_1\)；\(x+y&lt;2\) 的圖形是 \(L\) 左下方的半平面 \(E_2\)。把半平面和直線 \(L\) 合起來，就是 \(x+y\ge 2\) 與 \(x+y\le 2\) 的圖形。</p>
+  <div data-fig="half4" class="figcol"></div>
+  <div class="formula">
+    <span class="flabel">重點</span>不等式<strong>含等號</strong>時，圖形包含界線 \(L\)，直線畫<strong>實線</strong>；不等式<strong>不含等號</strong>時，圖形不包含界線 \(L\)，直線畫<strong>虛線</strong>。
+  </div>
+  <div class="note">
+    <span class="flabel">取點法</span>怎麼決定取哪一個半平面？以 \(x+y&lt;2\) 為例：先畫出 \(x+y=2\) 的直線，再任取一點代入（通常取原點 \(O(0,0)\)）。\(0+0&lt;2\) 成立，表示 \((0,0)\) 在 \(x+y&lt;2\) 的半平面上，所以包含原點的那個半平面就是圖形。若直線通過原點，就改取 \((1,0)\) 或 \((0,1)\) 來驗算。
+  </div>
+
+  <div data-tool="ineq"></div>
+
+  <article class="ex" id="ex3">
+    <div class="ex-head"><span class="tag">例題 3</span><h3>畫不等式與聯立不等式的圖形</h3></div>
+    <div class="prob">
+      <p>試在坐標平面上，畫出下列不等式的圖形。</p>
+      <p>(1) 二元一次不等式 \(x-2y+2\le 0\)。</p>
+      <p>(2) 二元一次聯立不等式 \(\begin{cases} x-2y+2\le 0\\ x+y+2&gt;0 \end{cases}\)</p>
+    </div>
+    <details class="sol" open>
+      <summary>解</summary>
+      <div class="sol-body">
+        <ol class="steps">
+          <li><strong>(1)</strong> 先畫直線 \(L_1: x-2y+2=0\)，它過 \((-2,0)\) 與 \((0,1)\)。將原點代入 \(x-2y+2\)，得 \(0-0+2=2&gt;0\)，所以 \(x-2y+2\le 0\) 的圖形是<strong>不含原點</strong>的半平面，再加上 \(L_1\)（含等號，畫實線），如圖 9。</li>
+          <li><strong>(2)</strong> 第 (1) 小題已畫出 \(x-2y+2\le 0\)。再畫 \(x+y+2&gt;0\)：直線 \(L_2: x+y+2=0\) 過 \((-2,0)\) 與 \((0,-2)\)。將原點代入得 \(0+0+2=2&gt;0\)，所以 \(x+y+2&gt;0\) 的圖形是<strong>含原點</strong>的半平面，\(L_2\) 不含等號，畫虛線，如圖 10。</li>
+          <li>兩個圖形的共同部分，就是聯立不等式的圖形，如圖 11 的深色區域。兩直線的交點 \((-2,0)\) 在虛線 \(L_2\) 上，不屬於這個區域，所以用空心圓表示。</li>
+        </ol>
+        <div data-fig="ex3" class="figcol"></div>
+      </div>
+    </details>
+  </article>
+
+  <article class="ex pr" id="pr3">
+    <div class="ex-head"><span class="tag">隨堂練習</span><h3>畫圖練習</h3></div>
+    <div class="prob">
+      <p>(1) 試畫出二元一次不等式 \(2x-y-2\le 0\) 的圖形。</p>
+      <p>(2) 試畫出二元一次聯立不等式 \(\begin{cases} 2x-y-2\le 0\\ x+3y-3&gt;0 \end{cases}\) 的圖形。</p>
+    </div>
+    <details class="sol">
+      <summary>解答</summary>
+      <div class="sol-body">
+        <ol class="steps">
+          <li><strong>(1)</strong> 直線 \(2x-y-2=0\) 過 \((1,0)\) 與 \((0,-2)\)。原點代入：\(0-0-2=-2\le 0\) 成立，所以圖形是含原點的半平面，並含界線（實線）。</li>
+          <li><strong>(2)</strong> 再畫 \(x+3y-3=0\)，過 \((3,0)\) 與 \((0,1)\)。原點代入：\(0+0-3=-3&gt;0\) 不成立，所以 \(x+3y-3&gt;0\) 的圖形是<strong>不含原點</strong>的半平面，界線畫虛線。</li>
+          <li>取兩者的共同部分。解 \(2x-y=2\) 與 \(x+3y=3\) 得交點 \(\left(\dfrac{9}{7},\dfrac{4}{7}\right)\)，它在虛線上，不屬於區域，畫成空心圓。</li>
+        </ol>
+        <div data-fig="pr3" class="figcol"></div>
+      </div>
+    </details>
+  </article>
+</section>
+
+<!-- ===================== 3 線性規劃 ===================== -->
+<section id="s3" class="sec">
+  <h2 class="sec-h"><span class="badge">3</span>線性規劃</h2>
+  <p>許多日常生活中的現實問題，都和二元一次聯立不等式有關。例如商人在有限資源限制下，尋找資源最佳分配的生產方法，以獲得最大利潤，這樣的問題可以用數學方法處理。如何找出一組符合限制條件的最佳解，是本章討論的重點。</p>
+  <p>先看一個例子：已知實數對 \((x,y)\) 滿足 \(\begin{cases} x+2y\ge 6\\ x-y\le 2\\ y\le 4 \end{cases}\)，要如何求 \(x+y\) 的最大值或最小值？</p>
+
+  <div class="defs">
+    <div class="def"><h4>可行解</h4><p>滿足聯立不等式的數對 \((x,y)\)。</p></div>
+    <div class="def"><h4>可行解區域</h4><p>所有可行解在平面上形成的區域，例如下圖 \(\triangle ABC\) 的內部與邊界。</p></div>
+    <div class="def"><h4>目標函數</h4><p>要求最大值或最小值的函數，這裡是 \(x+y\)。</p></div>
+    <div class="def"><h4>最佳解</h4><p>使目標函數產生最大值或最小值的點 \((x,y)\)。</p></div>
+  </div>
+
+  <p>當目標函數的值為某一常數 \(k\) 時，即 \(x+y=k\)，這是一條斜率為 \(-1\)、\(x\) 截距為 \(k\) 的直線。這條直線平行移動時，愈往右上方，\(k\) 值愈大；愈往左下方，\(k\) 值愈小。拖曳下面的滑桿，觀察直線通過可行解區域的情形。</p>
+
+  <div data-lp="p15"></div>
+
+  <div class="formula">
+    <span class="flabel">平行線法</span>
+    <ul style="margin:6px 0 0">
+      <li>直線 \(x+y=7\) 通過區域，其上的可行解都使 \(x+y\) 的值為 7。</li>
+      <li>直線 \(x+y=10\) 通過區域最右上方的頂點 \(C(6,4)\)。\(k&gt;10\) 時，直線不再通過區域，所以最大值為 10。</li>
+      <li>直線 \(x+y=2\) 通過區域最左上方的頂點 \(A(-2,4)\)。\(k&lt;2\) 時，直線不再通過區域，所以最小值為 2。</li>
+    </ul>
+  </div>
+  <p>頂點 \(A,B,C\) 是這樣求出來的：\(A\) 是 \(x+2y=6\) 與 \(y=4\) 的交點；\(C\) 是 \(x-y=2\) 與 \(y=4\) 的交點；\(B\) 是 \(x+2y=6\) 與 \(x-y=2\) 的交點 \(\left(\dfrac{10}{3},\dfrac{4}{3}\right)\)。</p>
+
+  <p>本章的目標函數都是一次函數（線型函數），可行解區域的邊界都是直線，解決這類問題的方法稱為<strong>線性規劃</strong>。實際解題時，通常要適當地假設變數，依限制條件列出聯立不等式，在坐標平面上畫出可行解區域，最後由目標函數產生的平行直線系求出最佳解，這個方法稱為<strong>平行線法</strong>。</p>
+
+  <div class="note">
+    <span class="flabel">解題流程</span>
+    <ol class="steps" style="margin:8px 0 0">
+      <li>設變數，寫出目標函數。</li>
+      <li>依限制條件列出聯立不等式（別漏掉 \(x\ge0,\ y\ge0\) 這類隱含條件）。</li>
+      <li>畫出可行解區域，找出頂點。</li>
+      <li>用平行線法或頂點法求最大值、最小值，再回到題目回答。</li>
+    </ol>
+  </div>
+
+  <div class="formula">
+    <span class="flabel">頂點法</span>如果可行解區域的邊界都是直線，且目標函數是一次函數，所求的極值若存在，必在可行解區域的<strong>頂點</strong>（或邊界）出現。這裡的頂點，指落在可行解區域內，且為至少兩條邊界直線交點的點。因此只要把所有頂點代入目標函數，比較大小，就能求出極值。
+  </div>
+  <p>兩種方法可以搭配使用：平行線法看得出「為什麼」，頂點法算得快。下面的例題 4 兩種都做一次。</p>
+
+  <article class="ex" id="ex4">
+    <div class="ex-head"><span class="tag">例題 4</span><h3>平行線法與頂點法</h3></div>
+    <div class="prob">
+      <p>在 \(\begin{cases} x+2y\le 6\\ 2x+y\le 6\\ x\ge 0\\ y\ge 0 \end{cases}\) 的可行解區域中，試求目標函數 \(x+3y\) 的最大值及最小值。</p>
+    </div>
+    <details class="sol" open>
+      <summary>解</summary>
+      <div class="sol-body">
+        <ol class="steps">
+          <li>依題意畫出可行解區域，頂點為 \(O(0,0)\)、\(A(3,0)\)、\(B(2,2)\)、\(C(0,3)\)。其中 \(A\) 是 \(2x+y=6\) 與 \(y=0\) 的交點，\(C\) 是 \(x+2y=6\) 與 \(x=0\) 的交點，\(B\) 是 \(x+2y=6\) 與 \(2x+y=6\) 的交點。</li>
+          <li><strong>平行線法：</strong>將直線 \(x+3y=0\) 平行移動通過可行解區域。直線往右上方移動時，\(x+3y\) 的值變大，最後一個碰到的是 \(C(0,3)\)；往左下方移動時，最後一個碰到的是 \(O(0,0)\)。所以 \(x+3y\) 在 \(C(0,3)\) 有最大值，在 \(O(0,0)\) 有最小值。</li>
+          <li><strong>頂點法：</strong>將四個頂點代入 \(x+3y\)，如下表。</li>
+        </ol>
+        <div class="tbl-wrap">
+          <table class="vt">
+            <caption>表 1</caption>
+            <tr><th>\((x,y)\)</th><td>\((0,0)\)</td><td>\((3,0)\)</td><td>\((2,2)\)</td><td>\((0,3)\)</td></tr>
+            <tr><th>\(x+3y\)</th><td>0</td><td>3</td><td>8</td><td>9</td></tr>
+          </table>
+        </div>
+        <p class="ans">最大值為 9（在 \((0,3)\)），最小值為 0（在 \((0,0)\)）。</p>
+        <p style="margin-top:14px">拖曳看看：</p>
+        <div data-lp="ex4"></div>
+      </div>
+    </details>
+  </article>
+
+  <article class="ex pr" id="pr4">
+    <div class="ex-head"><span class="tag">隨堂練習</span><h3>求 \(2x+y\) 的最大值與最小值</h3></div>
+    <div class="prob">
+      <p>在 \(\begin{cases} x+y\ge 10\\ x-y\le 0\\ y\le 10 \end{cases}\) 的可行解區域中，試求目標函數 \(2x+y\) 的最大值及最小值。</p>
+    </div>
+    <details class="sol">
+      <summary>解答</summary>
+      <div class="sol-body">
+        <ol class="steps">
+          <li>求邊界直線的交點：\(x+y=10\) 與 \(x-y=0\) 得 \((5,5)\)；\(x+y=10\) 與 \(y=10\) 得 \((0,10)\)；\(x-y=0\) 與 \(y=10\) 得 \((10,10)\)。可行解區域是以這三點為頂點的三角形（含邊界）。</li>
+          <li>將頂點代入 \(2x+y\)：</li>
+        </ol>
+        <div class="tbl-wrap">
+          <table class="vt">
+            <tr><th>\((x,y)\)</th><td>\((5,5)\)</td><td>\((0,10)\)</td><td>\((10,10)\)</td></tr>
+            <tr><th>\(2x+y\)</th><td>15</td><td>10</td><td>30</td></tr>
+          </table>
+        </div>
+        <p class="ans">最大值為 30（在 \((10,10)\)），最小值為 10（在 \((0,10)\)）。</p>
+        <div data-lp="pr4"></div>
+      </div>
+    </details>
+  </article>
+
+  <article class="ex" id="ex5">
+    <div class="ex-head"><span class="tag">例題 5</span><h3>提煉精油</h3></div>
+    <div class="prob">
+      <p>用一公噸原料 \(A\) 和一公噸原料 \(B\)，分別可提煉精油 25 公斤和 12 公斤。但生產過程中會產生廢棄物，每公噸原料 \(A\) 和原料 \(B\) 分別會產生 75 公斤和 25 公斤的廢棄物。已知原料 \(A\) 和原料 \(B\) 每公噸的成本分別為 15 萬元和 12 萬元，今若希望成本不超過 240 萬元，而廢棄物不超過 750 公斤，試問最多可提煉多少公斤的精油？</p>
+    </div>
+    <details class="sol" open>
+      <summary>解</summary>
+      <div class="sol-body">
+        <ol class="steps">
+          <li>設原料 \(A\) 有 \(x\) 公噸，原料 \(B\) 有 \(y\) 公噸。成本不超過 240 萬元，廢棄物不超過 750 公斤，所以
+            \[\begin{cases} 15x+12y\le 240\\ 75x+25y\le 750\\ x\ge 0\\ y\ge 0 \end{cases}\quad\Longrightarrow\quad \begin{cases} 5x+4y\le 80\\ 3x+y\le 30\\ x\ge 0\\ y\ge 0 \end{cases}\]</li>
+          <li>畫出可行解區域。其中 \(\left(\dfrac{40}{7},\dfrac{90}{7}\right)\) 是直線 \(5x+4y=80\) 與 \(3x+y=30\) 的交點。</li>
+          <li>目標函數 \(P\) 表示精油產量，\(P=25x+12y\)。本題要在可行解區域內找點 \((x,y)\)，使 \(P\) 最大。</li>
+          <li>當 \(P\) 為任一常數 \(k\) 時，\(k=25x+12y\) 都是斜率 \(-\dfrac{25}{12}\) 的直線。把它逐漸向右上方平移，最後通過的可行解是 \(\left(\dfrac{40}{7},\dfrac{90}{7}\right)\)，此時
+            \[25x+12y=25\cdot\frac{40}{7}+12\cdot\frac{90}{7}=\frac{2080}{7}\]</li>
+        </ol>
+        <p class="ans">最多可提煉 \(\dfrac{2080}{7}\)（約 297.14）公斤的精油。</p>
+        <p class="aside">為什麼最後碰到的是交點？兩條邊界直線的斜率是 \(-3\) 與 \(-\dfrac{5}{4}\)，目標直線的斜率 \(-\dfrac{25}{12}\approx-2.08\) 剛好介於兩者之間，所以它從右上方往下掃，會先碰到這兩條邊界相交的頂點。</p>
+        <div class="tbl-wrap">
+          <table class="vt">
+            <caption>頂點法驗算</caption>
+            <tr><th>\((x,y)\)</th><td>\((0,0)\)</td><td>\((10,0)\)</td><td>\((0,20)\)</td><td>\(\left(\frac{40}{7},\frac{90}{7}\right)\)</td></tr>
+            <tr class="best"><th>\(P=25x+12y\)</th><td>0</td><td>250</td><td>240</td><td>\(\frac{2080}{7}\approx 297.14\)</td></tr>
+          </table>
+        </div>
+        <div data-lp="ex5"></div>
+      </div>
+    </details>
+  </article>
+
+  <article class="ex pr" id="pr5">
+    <div class="ex-head"><span class="tag">隨堂練習</span><h3>合金的獲利</h3></div>
+    <div class="prob">
+      <p>大禹鍛冶工廠使用礦砂為主要原料，生產兩種成分不同的合金，其中 \(A\) 合金每公斤使用紅色礦砂 50 公克、黃色礦砂 40 公克；\(B\) 合金每公斤使用紅色礦砂 20 公克、黃色礦砂 40 公克。已知每售出一公斤的 \(A\) 合金，工廠可賺 50 元；每售出一公斤的 \(B\) 合金，工廠可賺 30 元。現在工廠進了 900 公克的紅色礦砂及 1200 公克的黃色礦砂。若將這些礦砂用來生產這兩種合金，試問售出成品後工廠最多可賺多少元？</p>
+    </div>
+    <details class="sol">
+      <summary>解答</summary>
+      <div class="sol-body">
+        <ol class="steps">
+          <li>設生產 \(A\) 合金 \(x\) 公斤、\(B\) 合金 \(y\) 公斤。紅色礦砂：\(50x+20y\le 900\)，即 \(5x+2y\le 90\)；黃色礦砂：\(40x+40y\le 1200\)，即 \(x+y\le 30\)；另外 \(x\ge 0,\ y\ge 0\)。</li>
+          <li>目標函數（獲利）\(P=50x+30y\)。</li>
+          <li>頂點：\(5x+2y=90\) 與 \(y=0\) 得 \((18,0)\)；\(x+y=30\) 與 \(x=0\) 得 \((0,30)\)；\(5x+2y=90\) 與 \(x+y=30\) 得 \((10,20)\)；再加上 \((0,0)\)。</li>
+        </ol>
+        <div class="tbl-wrap">
+          <table class="vt">
+            <tr><th>\((x,y)\)</th><td>\((0,0)\)</td><td>\((18,0)\)</td><td>\((10,20)\)</td><td>\((0,30)\)</td></tr>
+            <tr><th>\(P=50x+30y\)</th><td>0</td><td>900</td><td>1100</td><td>900</td></tr>
+          </table>
+        </div>
+        <p class="ans">生產 \(A\) 合金 10 公斤、\(B\) 合金 20 公斤時，工廠最多可賺 1100 元。</p>
+        <div data-lp="pr5"></div>
+      </div>
+    </details>
+  </article>
+
+  <article class="ex" id="ex6">
+    <div class="ex-head"><span class="tag">例題 6</span><h3>成本最低的生產安排</h3></div>
+    <div class="prob">
+      <p>某公司有兩工廠，生產成分相同但比例不同的合金。甲工廠生產的合金中，每百公克中含 \(A\) 金屬 2 公克、\(B\) 金屬 6 公克，其成本為 60000 元。乙工廠生產的合金中，每百公克中含 \(A\) 金屬 4 公克、\(B\) 金屬 3 公克，其成本為 40000 元。今有一訂單要求該公司提供合金，其中的 \(A\) 金屬、\(B\) 金屬至少各含 16、30 公克，試問甲、乙兩工廠需各生產多少百公克的合金，才能達成需求並使成本最低？</p>
+    </div>
+    <details class="sol" open>
+      <summary>解</summary>
+      <div class="sol-body">
+        <ol class="steps">
+          <li>設甲工廠生產合金 \(x\) 百公克，乙工廠生產合金 \(y\) 百公克。依題意列式：
+            \[\begin{cases} 2x+4y\ge 16\\ 6x+3y\ge 30\\ x\ge 0\\ y\ge 0 \end{cases}\quad\Longrightarrow\quad \begin{cases} x+2y\ge 8\\ 2x+y\ge 10\\ x\ge 0\\ y\ge 0 \end{cases}\]
+            畫出可行解區域（往右上方延伸，沒有上界）。</li>
+          <li>目標函數 \(P=60000x+40000y\)。以目標函數產生的平行線掃過可行解區域，可知所求的最小值存在。</li>
+          <li>可行解區域的頂點有 \((0,10)\)、\((4,2)\)、\((8,0)\)，其中 \((4,2)\) 是 \(x+2y=8\) 與 \(2x+y=10\) 的交點。代入目標函數：</li>
+        </ol>
+        <div class="tbl-wrap">
+          <table class="vt">
+            <caption>表 2</caption>
+            <tr><th>\((x,y)\)</th><td>\((0,10)\)</td><td>\((4,2)\)</td><td>\((8,0)\)</td></tr>
+            <tr><th>\(60000x+40000y\)</th><td>400000</td><td>320000</td><td>480000</td></tr>
+          </table>
+        </div>
+        <p class="ans">當 \((x,y)=(4,2)\) 時，\(P\) 有最小值 320000。即甲工廠生產合金 4 百公克、乙工廠生產合金 2 百公克，可使成本最低並達成需求。</p>
+        <p class="aside">這個區域沒有上界，為什麼最小值一定存在？因為 \(x,y\) 的係數都是正的，直線往右上方移動時 \(P\) 愈來愈大，往左下方移動則會碰到區域的邊界，所以最小值出現在左下方的頂點。下圖為了方便，把成本以「萬元」為單位：\(P=6x+4y\)。</p>
+        <div data-lp="ex6"></div>
+      </div>
+    </details>
+  </article>
+
+  <article class="ex pr" id="pr6">
+    <div class="ex-head"><span class="tag">隨堂練習</span><h3>兩工廠的運轉天數</h3></div>
+    <div class="prob">
+      <p>有甲、乙兩工廠生產 \(A,B\) 兩種不同產品，甲工廠每天可生產 \(A,B\) 各 4、2 公噸，乙工廠每天可生產 \(A,B\) 各 2、7 公噸。今有一訂單需求 \(A,B\) 各 16、20 公噸。假設甲工廠運轉一天成本 10000 元，乙工廠運轉一天成本 20000 元，試問甲、乙兩工廠各運轉幾天會使得成本最低並達成需求？</p>
+    </div>
+    <details class="sol">
+      <summary>解答</summary>
+      <div class="sol-body">
+        <ol class="steps">
+          <li>設甲工廠運轉 \(x\) 天，乙工廠運轉 \(y\) 天。產品 \(A\)：\(4x+2y\ge 16\)，即 \(2x+y\ge 8\)；產品 \(B\)：\(2x+7y\ge 20\)；另外 \(x\ge0,\ y\ge0\)。</li>
+          <li>目標函數（成本）\(C=10000x+20000y\)。</li>
+          <li>頂點：\(2x+y=8\) 與 \(x=0\) 得 \((0,8)\)；\(2x+7y=20\) 與 \(y=0\) 得 \((10,0)\)；\(2x+y=8\) 與 \(2x+7y=20\) 相減得 \(6y=12\)，\(y=2\)，\(x=3\)，交點為 \((3,2)\)。</li>
+        </ol>
+        <div class="tbl-wrap">
+          <table class="vt">
+            <tr><th>\((x,y)\)</th><td>\((0,8)\)</td><td>\((3,2)\)</td><td>\((10,0)\)</td></tr>
+            <tr><th>\(10000x+20000y\)</th><td>160000</td><td>70000</td><td>100000</td></tr>
+          </table>
+        </div>
+        <p class="ans">甲工廠運轉 3 天、乙工廠運轉 2 天，成本最低，為 70000 元。</p>
+        <div data-lp="pr6"></div>
+      </div>
+    </details>
+  </article>
+
+  <div class="note">
+    <span class="flabel">小故事</span>課本提到，線性規劃最早起源於 1920 到 1930 年代，由坎拓羅維奇（Leonid Kantorovich，1912–1986）及李安鐵夫（Wassily Leontief，1905–1999）等人所提出的研究方式演化而成。雖然發展不算早，但現在已經很成熟，輔以電腦強大的計算能力，已廣泛應用在經濟學及相關領域。
+  </div>
+</section>
+
+<!-- ===================== 習題 1 ===================== -->
+<section id="hw" class="sec">
+  <p class="kicker">習題 1</p>
+  <h2 class="sec-h" style="margin-bottom:6px">習題與解答</h2>
+  <p style="color:var(--muted);font-size:.95rem">每題的解答預設收合，可以先讓學生試做。按上方「展開全部解答」可一次打開。</p>
+
+  <h3 class="sub-h">一、基本題</h3>
+
+  <article class="ex hw" id="hw1">
+    <div class="ex-head"><span class="tag">習題 1</span></div>
+    <div class="prob">
+      <p>在坐標平面上畫出二元一次聯立不等式 \(\begin{cases} 3x+2y-12\le 0\\ x+y-2&gt;0 \end{cases}\) 的圖形。</p>
+    </div>
+    <details class="sol">
+      <summary>解答</summary>
+      <div class="sol-body split">
+        <div>
+          <ol class="steps">
+            <li>直線 \(L_1: 3x+2y=12\) 過 \((4,0)\)、\((0,6)\)。原點代入：\(-12\le 0\) 成立，所以取含原點的一側，含界線，畫實線。</li>
+            <li>直線 \(L_2: x+y=2\) 過 \((2,0)\)、\((0,2)\)。原點代入：\(0+0-2&gt;0\) 不成立，所以取不含原點的一側（右上方），不含界線，畫虛線。</li>
+            <li>取共同部分。解 \(3x+2y=12\) 與 \(x+y=2\)，得交點 \((8,-6)\)。它在虛線上，不屬於區域，畫成空心圓。圖形是兩直線之間、向左張開的區域。</li>
+          </ol>
+        </div>
+        <div class="figcol" data-fig="hw1"></div>
+      </div>
+    </details>
+  </article>
+
+  <article class="ex hw" id="hw2">
+    <div class="ex-head"><span class="tag">習題 2</span></div>
+    <div class="prob split">
+      <div>
+        <p>若二元一次聯立不等式的解集合如右圖深色區域所示，試寫出此聯立不等式。</p>
+        <p style="color:var(--muted);font-size:.9rem">圖中實線通過 \((3,2)\)、\((6,0)\)，虛線通過 \((0,1)\)、\((3,2)\)。</p>
+      </div>
+      <div class="figcol" data-fig="hw2"></div>
+    </div>
+    <details class="sol">
+      <summary>解答</summary>
+      <div class="sol-body">
+        <ol class="steps">
+          <li><strong>實線</strong>過 \((6,0)\) 與 \((3,2)\)，斜率為 \(\dfrac{2-0}{3-6}=-\dfrac{2}{3}\)，方程式 \(y=-\dfrac{2}{3}(x-6)\)，即 \(2x+3y=12\)。</li>
+          <li><strong>虛線</strong>過 \((0,1)\) 與 \((3,2)\)，斜率為 \(\dfrac{1}{3}\)，方程式 \(y=\dfrac{1}{3}x+1\)，即 \(x-3y+3=0\)。</li>
+          <li>區域包含原點。原點代入 \(2x+3y-12\)，得 \(-12\le 0\)；代入 \(x-3y+3\)，得 \(3&gt;0\)。實線含等號，虛線不含等號。</li>
+        </ol>
+        <p class="ans">\(\begin{cases} 2x+3y\le 12\\ x-3y+3&gt;0 \end{cases}\)</p>
+      </div>
+    </details>
+  </article>
+
+  <article class="ex hw" id="hw3">
+    <div class="ex-head"><span class="tag">習題 3</span></div>
+    <div class="prob">
+      <p>已知直線 \(L_1: 2x-y=1\)，\(L_2: 2x-y=3\)，試回答下列問題。</p>
+      <p>(1) 若 \(L_1\) 向右平移 \(k\) 單位，可得 \(L_2\)，則 \(k\) 值為何？</p>
+      <p>(2) 若 \(L_2\) 向上平移 \(h\) 單位，可得 \(L_1\)，則 \(h\) 值為何？</p>
+    </div>
+    <details class="sol">
+      <summary>解答</summary>
+      <div class="sol-body">
+        <ol class="steps">
+          <li><strong>(1)</strong> 向右平移 \(k\) 單位，是把 \(x\) 換成 \(x-k\)：\(2(x-k)-y=1\)，即 \(2x-y=1+2k\)。要與 \(L_2: 2x-y=3\) 相同，\(1+2k=3\)，得 \(k=1\)。
+            <br>驗算：兩線的 \(x\) 截距分別是 \(\dfrac12\) 與 \(\dfrac32\)，相差 1。</li>
+          <li><strong>(2)</strong> 向上平移 \(h\) 單位，是把 \(y\) 換成 \(y-h\)：\(2x-(y-h)=3\)，即 \(2x-y=3-h\)。要與 \(L_1: 2x-y=1\) 相同，\(3-h=1\)，得 \(h=2\)。
+            <br>驗算：兩線的 \(y\) 截距分別是 \(-3\) 與 \(-1\)，\(L_2\) 往上 2 單位剛好是 \(L_1\)。</li>
+        </ol>
+        <p class="ans">(1) \(k=1\)　(2) \(h=2\)</p>
+      </div>
+    </details>
+  </article>
+
+  <article class="ex hw" id="hw4">
+    <div class="ex-head"><span class="tag">習題 4</span></div>
+    <div class="prob split">
+      <div>
+        <p>右圖為 \(A,B,C,D\) 四點及直線 \(L: x-2y=0\)。試問 \(A,B,C,D\) 四個點的坐標 \((x,y)\) 分別代入 \(x-2y=k\)，哪一點所得 \(k\) 值最大？</p>
+      </div>
+      <div class="figcol" data-fig="hw4"></div>
+    </div>
+    <details class="sol">
+      <summary>解答</summary>
+      <div class="sol-body split">
+        <div>
+          <ol class="steps">
+            <li>\(x-2y=k\) 是與 \(L\) 平行的直線，\(x\) 截距為 \(k\)。直線愈往右下方，\(k\) 愈大；愈往左上方，\(k\) 愈小。</li>
+            <li>過 \(A,B,C,D\) 各作 \(L\) 的平行線，哪一點的平行線最靠右下，\(k\) 就最大。四點中，\(D\) 在 \(A\) 的右方（\(y\) 相同，\(x\) 較大），也在 \(C\) 的下方（\(x\) 相同，\(y\) 較小）；而 \(A\) 在 \(B\) 的下方，\(C\) 在 \(B\) 的右方。所以 \(D\) 最靠右下。</li>
+          </ol>
+          <p class="ans">\(D\) 點所得的 \(k\) 值最大。</p>
+          <p class="aside">四點都在 \(L\) 的左上方，所以 \(k\) 都是負的，\(D\) 的 \(k\) 最接近 0，也就最大。圖中的坐標只是示意，比較的是相對位置。</p>
+        </div>
+        <div class="figcol" data-fig="hw4s"></div>
+      </div>
+    </details>
+  </article>
+
+  <article class="ex hw" id="hw5">
+    <div class="ex-head"><span class="tag">習題 5</span></div>
+    <div class="prob">
+      <p>已知 \(x,y\) 為整數，試求滿足二元一次聯立不等式 \(\begin{cases} 3x+2y\le 6\\ x\ge 0\\ y\ge 0 \end{cases}\) 的 \((x,y)\) 共有幾組？</p>
+    </div>
+    <details class="sol">
+      <summary>解答</summary>
+      <div class="sol-body split">
+        <div>
+          <p>可行解區域是以 \((0,0)\)、\((2,0)\)、\((0,3)\) 為頂點的三角形。逐一列出 \(x\) 的整數值：</p>
+          <div class="tbl-wrap">
+            <table class="vt">
+              <tr><th>\(x\)</th><th>\(y\) 的範圍</th><th>整數 \(y\)</th><th>組數</th></tr>
+              <tr><td>0</td><td>\(2y\le 6\)，\(y\le 3\)</td><td>0, 1, 2, 3</td><td>4</td></tr>
+              <tr><td>1</td><td>\(2y\le 3\)，\(y\le 1.5\)</td><td>0, 1</td><td>2</td></tr>
+              <tr><td>2</td><td>\(2y\le 0\)，\(y\le 0\)</td><td>0</td><td>1</td></tr>
+            </table>
+          </div>
+          <p>\(x\ge 3\) 時 \(3x\ge 9&gt;6\)，不可能。</p>
+          <p class="ans">共 \(4+2+1=7\) 組。</p>
+        </div>
+        <div class="figcol" data-fig="hw5"></div>
+      </div>
+    </details>
+  </article>
+
+  <h3 class="sub-h">二、進階題</h3>
+
+  <article class="ex hw" id="hw6">
+    <div class="ex-head"><span class="tag">習題 6</span></div>
+    <div class="prob split">
+      <div>
+        <p>假設 \(L_1: ax+by=c_1\)、\(L_2: ax+by=c_2\)、\(L_3: ax+by=c_3\)，若 \(a&lt;0\)，試回答下列問題。</p>
+        <p>(1) \(b\) 是正數或負數？</p>
+        <p>(2) \(c_1,c_2,c_3\) 的大小關係為何？</p>
+      </div>
+      <div class="figcol" data-fig="hw6"></div>
+    </div>
+    <details class="sol">
+      <summary>解答</summary>
+      <div class="sol-body">
+        <ol class="steps">
+          <li><strong>(1)</strong> 三條直線平行，斜率都是 \(-\dfrac{a}{b}\)。由圖可知直線往右上方傾斜，斜率為正，所以 \(-\dfrac{a}{b}&gt;0\)。又 \(a&lt;0\)，得 \(-a&gt;0\)，因此 \(b&gt;0\)。</li>
+          <li><strong>(2)</strong> 因 \(b&gt;0\)，直線 \(ax+by=c\) 的 \(y\) 截距是 \(\dfrac{c}{b}\)，\(c\) 愈大，\(y\) 截距愈大，直線愈往上。圖中 \(L_3\) 在最上方，\(L_2\) 居中，\(L_1\) 在最下方。</li>
+        </ol>
+        <p class="ans">(1) \(b\) 是正數　(2) \(c_1&lt; c_2&lt; c_3\)</p>
+        <p class="aside">用 \(x\) 截距檢查：\(x\) 截距為 \(\dfrac{c}{a}\)，而 \(a&lt;0\)，所以 \(c\) 愈大，\(x\) 截距愈小，直線愈靠左。圖中 \(L_3\) 最靠左，結果一致。</p>
+      </div>
+    </details>
+  </article>
+
+  <article class="ex hw" id="hw7">
+    <div class="ex-head"><span class="tag">習題 7</span></div>
+    <div class="prob split">
+      <div>
+        <p>右圖為正六邊形 \(ABCDEF\)，若直線 \(L\) 的方程式為 \(3x-2y-k=0\)，試問直線 \(L\) 通過哪一個頂點時，可使 \(k\) 值最大？</p>
+      </div>
+      <div class="figcol" data-fig="hw7"></div>
+    </div>
+    <details class="sol">
+      <summary>解答</summary>
+      <div class="sol-body split">
+        <div>
+          <ol class="steps">
+            <li>\(k=3x-2y\)。取邊長為 2，由圖得 \(A(-1,0)\)、\(B(1,0)\)、\(C(2,\sqrt3)\)、\(D(1,2\sqrt3)\)、\(E(-1,2\sqrt3)\)、\(F(-2,\sqrt3)\)。</li>
+            <li>各頂點代入 \(k=3x-2y\)：</li>
+          </ol>
+          <div class="tbl-wrap">
+            <table class="vt">
+              <tr><th>頂點</th><td>\(A\)</td><td>\(B\)</td><td>\(C\)</td><td>\(D\)</td><td>\(E\)</td><td>\(F\)</td></tr>
+              <tr><th>\(k\)</th><td>\(-3\)</td><td>3</td><td>\(6-2\sqrt3\)</td><td>\(3-4\sqrt3\)</td><td>\(-3-4\sqrt3\)</td><td>\(-6-2\sqrt3\)</td></tr>
+              <tr><th>約為</th><td>\(-3\)</td><td>3</td><td>2.54</td><td>\(-3.93\)</td><td>\(-9.93\)</td><td>\(-9.46\)</td></tr>
+            </table>
+          </div>
+          <p class="ans">直線 \(L\) 通過頂點 \(B\) 時，\(k\) 值最大（\(k=3\)）。</p>
+          <p class="aside">用平行線看：\(3x-2y=k\) 的斜率是 \(\dfrac32\)，\(x\) 截距是 \(\dfrac{k}{3}\)，直線愈往右下方，\(k\) 愈大。最後碰到正六邊形的是 \(B\)，與邊長無關：邊長為 \(s\) 時，\(B\) 的 \(k\) 是 \(\dfrac{3s}{2}\)，\(C\) 的 \(k\) 是 \((3-\sqrt3)s\approx1.27s\)，仍是 \(B\) 較大。</p>
+        </div>
+        <div class="figcol" data-fig="hw7s"></div>
+      </div>
+    </details>
+  </article>
+
+  <article class="ex hw" id="hw8">
+    <div class="ex-head"><span class="tag">習題 8</span></div>
+    <div class="prob">
+      <p>某進出口公司有甲、乙兩貨倉，儲存某原料各 50 公噸、60 公噸。該公司接到 \(A\)、\(B\) 兩工廠分別訂購該原料 40 公噸、50 公噸，若每公噸運費如下表，則應自各貨倉運多少原料至各工廠才能使得運費最少？此時的運費為多少元？</p>
+      <div class="tbl-wrap">
+        <table class="vt">
+          <tr><th></th><th>\(A\) 工廠</th><th>\(B\) 工廠</th></tr>
+          <tr><th>貨倉甲</th><td>500 元</td><td>600 元</td></tr>
+          <tr><th>貨倉乙</th><td>650 元</td><td>700 元</td></tr>
+        </table>
+      </div>
+    </div>
+    <details class="sol">
+      <summary>解答</summary>
+      <div class="sol-body">
+        <ol class="steps">
+          <li>設甲倉運 \(x\) 公噸到 \(A\) 工廠、\(y\) 公噸到 \(B\) 工廠。兩工廠的訂購量固定，所以乙倉運到 \(A\) 工廠 \(40-x\) 公噸，運到 \(B\) 工廠 \(50-y\) 公噸。</li>
+          <li>各項運量都不能是負的，所以 \(0\le x\le 40\)，\(0\le y\le 50\)。再考慮倉庫存量：甲倉存 50 公噸，運出 \(x+y\le 50\)；乙倉存 60 公噸，運出 \((40-x)+(50-y)\le 60\)，化簡得 \(x+y\ge 30\)。
+            \[\begin{cases} 0\le x\le 40\\ 0\le y\le 50\\ 30\le x+y\le 50 \end{cases}\]</li>
+          <li>運費
+            \[C=500x+600y+650(40-x)+700(50-y)=61000-150x-100y\]
+            要 \(C\) 最小，就要 \(150x+100y\) 最大。</li>
+          <li>可行解區域是五邊形，頂點為 \((0,30)\)、\((0,50)\)、\((40,10)\)、\((40,0)\)、\((30,0)\)，代入運費：</li>
+        </ol>
+        <div class="tbl-wrap">
+          <table class="vt">
+            <tr><th>\((x,y)\)</th><td>\((0,30)\)</td><td>\((0,50)\)</td><td>\((40,10)\)</td><td>\((40,0)\)</td><td>\((30,0)\)</td></tr>
+            <tr><th>\(150x+100y\)</th><td>3000</td><td>5000</td><td>7000</td><td>6000</td><td>4500</td></tr>
+            <tr class="best"><th>\(C\)（元）</th><td>58000</td><td>56000</td><td>54000</td><td>55000</td><td>56500</td></tr>
+          </table>
+        </div>
+        <p class="ans">甲倉運 40 公噸到 \(A\) 工廠、10 公噸到 \(B\) 工廠；乙倉運 0 公噸到 \(A\) 工廠、40 公噸到 \(B\) 工廠。最少運費為 54000 元。</p>
+        <p class="aside">驗算：\(40\times500+10\times600+40\times700=20000+6000+28000=54000\)。甲倉共出貨 50 公噸、乙倉 40 公噸，都沒有超過庫存。</p>
+        <div data-lp="hw8"></div>
+      </div>
+    </details>
+  </article>
+
+  <article class="ex hw" id="hw9">
+    <div class="ex-head"><span class="tag">習題 9</span></div>
+    <div class="prob split">
+      <div>
+        <p>如右圖，\(\overleftrightarrow{AB}: 2x-y-7=0\)、\(\overleftrightarrow{BC}: x-y+14=0\)、\(\overleftrightarrow{CA}: 4x+3y=19\)，設可行解區域為 \(A,B,C\) 三點所圍成的三角形區域及邊界，目標函數為 \(x+ky\)，且在 \((5,3)\) 與 \((7,7)\) 有最大值，則 \(k\) 值為何？</p>
+      </div>
+      <div class="figcol" data-fig="hw9"></div>
+    </div>
+    <details class="sol">
+      <summary>解答</summary>
+      <div class="sol-body">
+        <ol class="steps">
+          <li>先確認 \((5,3)\) 與 \((7,7)\) 都在直線 \(AB\) 上：\(2\cdot5-3-7=0\)，\(2\cdot7-7-7=0\)。</li>
+          <li>最大值同時出現在兩個不同的點，表示目標函數的等值線 \(x+ky=c\) 與直線 \(AB\) 重合，所以它們的斜率相同。\(AB\) 的斜率是 2，\(x+ky=c\) 的斜率是 \(-\dfrac{1}{k}\)，得 \(-\dfrac1k=2\)，\(k=-\dfrac12\)。</li>
+          <li>用函數值檢查：兩點的函數值相等，\(5+3k=7+7k\)，得 \(4k=-2\)，也是 \(k=-\dfrac12\)。</li>
+          <li>再確認它真的是最大值。頂點為 \(A(4,1)\)、\(B(21,35)\)、\(C\left(-\dfrac{23}{7},\dfrac{75}{7}\right)\)，代入 \(x-\dfrac12y\)：\(A\) 得 \(\dfrac72\)，\(B\) 得 \(\dfrac72\)，\(C\) 得 \(-\dfrac{121}{14}\)。最大值 \(\dfrac72\) 發生在整個邊 \(AB\) 上。</li>
+        </ol>
+        <p class="ans">\(k=-\dfrac12\)</p>
+      </div>
+    </details>
+  </article>
+
+  <h3 class="sub-h">三、素養題</h3>
+
+  <article class="ex hw" id="hw10">
+    <div class="ex-head"><span class="tag">習題 10</span><h3>雞場的飼料</h3></div>
+    <div class="prob">
+      <p>為預防禽流感，營養師吩咐雞場主人每天必須從飼料中提供至少 84 單位的營養素 \(A\)、至少 72 單位的營養素 \(B\) 和至少 60 單位的營養素 \(C\) 給他的雞群。這三種營養素可由兩種飼料中獲得，且知第一種飼料每公斤售價 5 元並含有 7 單位的營養素 \(A\)、3 單位的營養素 \(B\) 與 3 單位的營養素 \(C\)；第二種飼料每公斤售價 4 元並含有 2 單位的營養素 \(A\)、6 單位的營養素 \(B\) 與 2 單位的營養素 \(C\)。若雞場主人每天使用 \(x\) 公斤的第一種飼料與 \(y\) 公斤的第二種飼料就能符合營養師吩咐。</p>
+      <p>(1) 除了 \(x\ge 0,\ y\ge 0\) 兩個條件外，寫下 \(x,y\) 必須滿足的聯立不等式。</p>
+      <p>(2) 若雞場主人想以最少的飼料成本來達到雞群的營養要求，其目標函數為何？</p>
+      <p>(3) 若雞場主人想以最少的飼料成本來達到雞群的營養要求，最少的飼料成本又是多少元？</p>
+    </div>
+    <details class="sol">
+      <summary>解答</summary>
+      <div class="sol-body">
+        <ol class="steps">
+          <li><strong>(1)</strong> 逐項整理營養素。\(A\)：\(7x+2y\ge 84\)；\(B\)：\(3x+6y\ge 72\)，同除以 3 得 \(x+2y\ge 24\)；\(C\)：\(3x+2y\ge 60\)。
+            \[\begin{cases} 7x+2y\ge 84\\ x+2y\ge 24\\ 3x+2y\ge 60 \end{cases}\]</li>
+          <li><strong>(2)</strong> 成本是第一種飼料每公斤 5 元、第二種每公斤 4 元，目標函數 \(C=5x+4y\)。</li>
+          <li><strong>(3)</strong> 畫出可行解區域（往右上方延伸）。頂點由相鄰邊界的交點求得：
+            <br>在 \(y\) 軸上：\(x=0\) 時，三式要求 \(y\ge 42,\ 12,\ 30\)，取最嚴格的 \(y\ge 42\)，得 \((0,42)\)。
+            <br>\(7x+2y=84\) 與 \(3x+2y=60\) 相減，\(4x=24\)，得 \((6,21)\)。
+            <br>\(3x+2y=60\) 與 \(x+2y=24\) 相減，\(2x=36\)，得 \((18,3)\)。
+            <br>在 \(x\) 軸上：\(y=0\) 時，三式要求 \(x\ge 12,\ 24,\ 20\)，取 \(x\ge 24\)，得 \((24,0)\)。
+            <br>\(x+2y=24\) 與 \(7x+2y=84\) 的交點 \((10,7)\) 不滿足 \(3x+2y\ge 60\)（\(30+14=44\)），不是頂點。</li>
+        </ol>
+        <div class="tbl-wrap">
+          <table class="vt">
+            <tr><th>\((x,y)\)</th><td>\((0,42)\)</td><td>\((6,21)\)</td><td>\((18,3)\)</td><td>\((24,0)\)</td></tr>
+            <tr class="best"><th>\(5x+4y\)</th><td>168</td><td>114</td><td>102</td><td>120</td></tr>
+          </table>
+        </div>
+        <p class="ans">(1) 如上　(2) \(C=5x+4y\)　(3) \(x=18,\ y=3\) 時成本最低，最少為 102 元。</p>
+        <p class="aside">區域沒有上界，但 \(x,y\) 的係數都是正的，往右上方成本只會更高，所以最小值一定出現在左下方的頂點。</p>
+        <div data-lp="hw10"></div>
+      </div>
+    </details>
+  </article>
+</section>
+
+<!-- ===================== 小結 ===================== -->
+<section id="sum" class="sec">
+  <p class="kicker">小結</p>
+  <h2 class="sec-h">這一章帶走什麼</h2>
+  <div class="sum-list">
+    <div class="def"><h4>平行直線系</h4><p>\(ax+by+c=0\) 中，\(a,b\) 不變、只改常數項，得到斜率相同、位置不同的一系列直線。</p></div>
+    <div class="def"><h4>不等式的圖形</h4><p>含等號畫實線、不含等號畫虛線；用原點（或 \((1,0)\)、\((0,1)\)）代入，決定取哪一側的半平面。聯立不等式取各半平面的共同部分。</p></div>
+    <div class="def"><h4>四個名詞</h4><p>可行解、可行解區域、目標函數、最佳解。目標函數是一次函數、邊界是直線，就是線性規劃。</p></div>
+    <div class="def"><h4>平行線法</h4><p>令目標函數等於 \(k\)，得一族平行直線；看直線往哪個方向移動使 \(k\) 增大，最後通過區域的位置就是最佳解。</p></div>
+    <div class="def"><h4>頂點法</h4><p>極值若存在，必在頂點出現。求出所有頂點，代入目標函數比大小。</p></div>
+    <div class="def"><h4>解題提醒</h4><p>先設變數再列式，別漏掉 \(x\ge0,\ y\ge0\)。要求整數解時，頂點未必是整數，需要回到區域內逐一檢查。區域無界時，先判斷最大值或最小值是否存在。</p></div>
+  </div>
+</section>
+
+<footer class="foot">
+  <p>內容整理自《選修數學乙（下）》第 1 章「線性規劃」，圖形為重新繪製的示意圖；習題 1 的解答與驗算為本講義補充。</p>
+</footer>
+
+</div>
+<script>
+(function () {
+'use strict';
+
+/* ---------- helpers ---------- */
+var MINUS = '−';
+var uid = 0;
+function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+function r1(n) { return Math.round(n * 10) / 10; }
+function fmt(n) {
+  var r = Math.round(n * 100) / 100;
+  if (r === 0) r = 0;
+  return String(r).replace('-', MINUS);
+}
+function svgSym(s) {
+  return esc(s).replace(/-/g, MINUS).replace(/[xykP]/g, function (m) { return '<tspan font-style="italic">' + m + '</tspan>'; });
+}
+function svgLab(s) {
+  return esc(s).replace(/-/g, MINUS).replace(/[A-Z]/g, function (m) { return '<tspan font-style="italic">' + m + '</tspan>'; });
+}
+function htmlSym(s) {
+  return esc(s).replace(/-/g, MINUS).replace(/[xykP]/g, function (m) { return '<i>' + m + '</i>'; });
+}
+function sub(n) { return '₀₁₂₃₄₅₆₇₈₉'.charAt(n); }
+function gcd(a, b) { return b === 0 ? a : gcd(b, a % b); }
+function isInt(n) { return Math.abs(n - Math.round(n)) < 1e-9; }
+function frac(n, d) {
+  if (d < 0) { n = -n; d = -d; }
+  if (!isInt(n) || !isInt(d)) return fmt(n / d);
+  n = Math.round(n); d = Math.round(d);
+  var g = gcd(Math.abs(n), d);
+  n /= g; d /= g;
+  return d === 1 ? fmt(n) : fmt(n) + '/' + d;
+}
+function term(co, v, first) {
+  if (co === 0) return '';
+  var sgn = co < 0 ? MINUS : (first ? '' : '+');
+  var m = Math.abs(co);
+  return sgn + (m === 1 ? '' : fmt(m)) + v;
+}
+function lin(a, b) {
+  var t1 = term(a, 'x', true);
+  var t2 = term(b, 'y', t1 === '');
+  return (t1 + t2) || '0';
+}
+
+/* ---------- geometry ---------- */
+function clip(poly, a, b, c) {
+  var out = [], n = poly.length, i;
+  for (i = 0; i < n; i++) {
+    var P = poly[i], Q = poly[(i + 1) % n];
+    var fp = a * P[0] + b * P[1] - c, fq = a * Q[0] + b * Q[1] - c;
+    if (fp <= 1e-9) out.push(P);
+    if ((fp < -1e-9 && fq > 1e-9) || (fp > 1e-9 && fq < -1e-9)) {
+      var t = fp / (fp - fq);
+      out.push([P[0] + t * (Q[0] - P[0]), P[1] + t * (Q[1] - P[1])]);
+    }
+  }
+  return out;
+}
+function lineRect(a, b, c, v) {
+  var pts = [], e = 1e-9, i, j;
+  if (Math.abs(b) > e) {
+    [v.x0, v.x1].forEach(function (x) {
+      var y = (c - a * x) / b;
+      if (y >= v.y0 - e && y <= v.y1 + e) pts.push([x, y]);
+    });
+  }
+  if (Math.abs(a) > e) {
+    [v.y0, v.y1].forEach(function (y) {
+      var x = (c - b * y) / a;
+      if (x >= v.x0 - e && x <= v.x1 + e) pts.push([x, y]);
+    });
+  }
+  if (pts.length < 2) return null;
+  var best = null, bd = -1;
+  for (i = 0; i < pts.length; i++) for (j = i + 1; j < pts.length; j++) {
+    var d = Math.pow(pts[i][0] - pts[j][0], 2) + Math.pow(pts[i][1] - pts[j][1], 2);
+    if (d > bd) { bd = d; best = [pts[i], pts[j]]; }
+  }
+  if (best[0][0] > best[1][0] || (best[0][0] === best[1][0] && best[0][1] > best[1][1])) best = [best[1], best[0]];
+  return best;
+}
+function normCon(c) {
+  var s = c.op === '>=' ? -1 : 1;
+  return { a: s * c.a, b: s * c.b, c: s * c.c };
+}
+function feasible(cons, x, y) {
+  for (var i = 0; i < cons.length; i++) if (cons[i].a * x + cons[i].b * y > cons[i].c + 1e-7) return false;
+  return true;
+}
+
+/* ---------- plot ---------- */
+function Plot(v, o) {
+  o = o || {};
+  this.v = v;
+  this.u = o.unit || 28;
+  this.step = o.step || 1;
+  this.lstep = o.lstep || this.step;
+  this.noO = !!o.noO;
+  this.noXT = !!o.noXT;
+  this.plain = !!o.plain;
+  var p = o.pad || {};
+  this.pad = { l: p.l != null ? p.l : 26, r: p.r != null ? p.r : 24, t: p.t != null ? p.t : 22, b: p.b != null ? p.b : 24 };
+  this.W = Math.round((v.x1 - v.x0) * this.u + this.pad.l + this.pad.r);
+  this.H = Math.round((v.y1 - v.y0) * this.u + this.pad.t + this.pad.b);
+  this.id = 'pl' + (++uid);
+  this.alt = o.alt || '坐標平面上的圖形';
+  this.L = { grid: [], shade: [], axes: [], lines: [], pts: [], txt: [] };
+  this.leg = [];
+  this._grid();
+}
+Plot.prototype.X = function (x) { return this.pad.l + (x - this.v.x0) * this.u; };
+Plot.prototype.Y = function (y) { return this.pad.t + (this.v.y1 - y) * this.u; };
+Plot.prototype._grid = function () {
+  var v = this.v, s = this.step, ls = this.lstep, i, n0, n1;
+  var X = this.X.bind(this), Y = this.Y.bind(this);
+  if (!this.plain) {
+    n0 = Math.ceil(v.x0 / s - 1e-9); n1 = Math.floor(v.x1 / s + 1e-9);
+    for (i = n0; i <= n1; i++) {
+      this.L.grid.push('<line class="g-grid" x1="' + r1(X(i * s)) + '" y1="' + r1(Y(v.y0)) + '" x2="' + r1(X(i * s)) + '" y2="' + r1(Y(v.y1)) + '"/>');
+    }
+    n0 = Math.ceil(v.y0 / s - 1e-9); n1 = Math.floor(v.y1 / s + 1e-9);
+    for (i = n0; i <= n1; i++) {
+      this.L.grid.push('<line class="g-grid" x1="' + r1(X(v.x0)) + '" y1="' + r1(Y(i * s)) + '" x2="' + r1(X(v.x1)) + '" y2="' + r1(Y(i * s)) + '"/>');
+    }
+  }
+  var mk = 'url(#ar' + this.id + ')';
+  this.L.axes.push('<line class="g-axis" x1="' + r1(X(v.x0)) + '" y1="' + r1(Y(0)) + '" x2="' + r1(X(v.x1) + 8) + '" y2="' + r1(Y(0)) + '" marker-end="' + mk + '"/>');
+  this.L.axes.push('<line class="g-axis" x1="' + r1(X(0)) + '" y1="' + r1(Y(v.y0)) + '" x2="' + r1(X(0)) + '" y2="' + r1(Y(v.y1) - 8) + '" marker-end="' + mk + '"/>');
+  this.L.axes.push('<text class="g-name" x="' + r1(X(v.x1) + 13) + '" y="' + r1(Y(0) + 4) + '" font-style="italic">x</text>');
+  this.L.axes.push('<text class="g-name" x="' + r1(X(0) + 9) + '" y="' + r1(Y(v.y1) - 2) + '" font-style="italic">y</text>');
+  if (!this.noO) this.L.axes.push('<text class="g-name" x="' + r1(X(0) - 7) + '" y="' + r1(Y(0) + 15) + '" text-anchor="end" font-style="italic">O</text>');
+  if (!this.plain) {
+    n0 = Math.ceil(v.x0 / ls - 1e-9); n1 = Math.floor(v.x1 / ls + 1e-9);
+    if (!this.noXT) for (i = n0; i <= n1; i++) {
+      if (i === 0) continue;
+      this.L.axes.push('<text class="g-tick" x="' + r1(X(i * ls)) + '" y="' + r1(Y(0) + 15) + '" text-anchor="middle">' + fmt(i * ls) + '</text>');
+    }
+    n0 = Math.ceil(v.y0 / ls - 1e-9); n1 = Math.floor(v.y1 / ls + 1e-9);
+    for (i = n0; i <= n1; i++) {
+      if (i === 0) continue;
+      this.L.axes.push('<text class="g-tick" x="' + r1(X(0) - 6) + '" y="' + r1(Y(i * ls) + 4) + '" text-anchor="end">' + fmt(i * ls) + '</text>');
+    }
+  }
+};
+Plot.prototype.shade = function (cons, o) {
+  o = o || {};
+  var v = this.v, poly = [[v.x0, v.y0], [v.x1, v.y0], [v.x1, v.y1], [v.x0, v.y1]], self = this;
+  cons.forEach(function (c) { poly = clip(poly, c.a, c.b, c.c); });
+  if (poly.length >= 3) {
+    var pts = poly.map(function (p) { return r1(self.X(p[0])) + ',' + r1(self.Y(p[1])); }).join(' ');
+    this.L.shade.push('<polygon points="' + pts + '" fill="' + (o.fill || 'var(--region)') + '" fill-opacity="' + (o.op != null ? o.op : 0.55) + '"/>');
+  }
+  return poly;
+};
+Plot.prototype.line = function (a, b, c, o) {
+  o = o || {};
+  var seg = lineRect(a, b, c, this.v);
+  if (!seg) return null;
+  var x1 = this.X(seg[0][0]), y1 = this.Y(seg[0][1]), x2 = this.X(seg[1][0]), y2 = this.Y(seg[1][1]);
+  var col = o.color || 'var(--ink)';
+  this.L.lines.push('<line x1="' + r1(x1) + '" y1="' + r1(y1) + '" x2="' + r1(x2) + '" y2="' + r1(y2) + '" stroke="' + col + '" stroke-width="' + (o.w || 2.2) + '"' +
+    (o.dash ? ' stroke-dasharray="6 5" stroke-linecap="butt"' : ' stroke-linecap="round"') + (o.op ? ' stroke-opacity="' + o.op + '"' : '') + '/>');
+  if (o.legend) this.leg.push({ text: o.legend, color: col, dash: !!o.dash });
+  return seg;
+};
+Plot.prototype.segs = function (pts, o) {
+  o = o || {};
+  var self = this;
+  var s = pts.map(function (p) { return r1(self.X(p[0])) + ',' + r1(self.Y(p[1])); }).join(' ');
+  this.L.lines.push('<polygon points="' + s + '" fill="' + (o.fill || 'none') + '"' + (o.fill ? ' fill-opacity="' + (o.fop || 0.4) + '"' : '') +
+    ' stroke="' + (o.color || 'var(--ink)') + '" stroke-width="' + (o.w || 2) + '" stroke-linejoin="round"/>');
+};
+Plot.prototype.pt = function (x, y, o) {
+  o = o || {};
+  var cx = this.X(x), cy = this.Y(y), col = o.color || 'var(--ink)';
+  if (o.open) {
+    this.L.pts.push('<circle cx="' + r1(cx) + '" cy="' + r1(cy) + '" r="4.4" fill="var(--surface)" stroke="' + col + '" stroke-width="2"/>');
+  } else {
+    this.L.pts.push('<circle class="g-pt" cx="' + r1(cx) + '" cy="' + r1(cy) + '" r="' + (o.r || 4) + '" fill="' + col + '"/>');
+  }
+  if (o.label) {
+    this.L.txt.push('<text class="g-lab" x="' + r1(cx + (o.dx != null ? o.dx : 7)) + '" y="' + r1(cy + (o.dy != null ? o.dy : -7)) + '" text-anchor="' + (o.anchor || 'start') + '">' + svgLab(o.label) + '</text>');
+  }
+};
+Plot.prototype.text = function (x, y, s, o) {
+  o = o || {};
+  this.L.txt.push('<text class="g-lab" x="' + r1(this.X(x) + (o.dx || 0)) + '" y="' + r1(this.Y(y) + (o.dy || 0)) + '" text-anchor="' + (o.anchor || 'middle') + '"' + (o.color ? ' style="fill:' + o.color + '"' : '') + '>' + svgLab(s) + '</text>');
+};
+Plot.prototype.svg = function () {
+  var L = this.L;
+  return '<svg width="' + this.W + '" height="' + this.H + '" viewBox="0 0 ' + this.W + ' ' + this.H + '" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="' + esc(this.alt) + '">' +
+    '<defs><marker id="ar' + this.id + '" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--ink)"/></marker></defs>' +
+    L.grid.join('') + L.shade.join('') + L.axes.join('') + L.lines.join('') + L.pts.join('') + L.txt.join('') + '</svg>';
+};
+Plot.prototype.legendHTML = function () {
+  if (!this.leg.length) return '';
+  return '<ul class="legend">' + this.leg.map(function (e) {
+    if (e.region) return '<li><span class="rg"></span>' + esc(e.text) + '</li>';
+    return '<li><span class="sw' + (e.dash ? ' d' : '') + '" style="--c:' + e.color + '"></span>' + htmlSym(e.text) + '</li>';
+  }).join('') + '</ul>';
+};
+Plot.prototype.html = function (cap) {
+  return '<figure class="fig">' + this.svg() + this.legendHTML() + (cap ? '<figcaption>' + cap + '</figcaption>' : '') + '</figure>';
+};
+
+/* ---------- static figures ---------- */
+var C = { c1: 'var(--c1)', c2: 'var(--c2)', c3: 'var(--c3)', c4: 'var(--c4)', c5: 'var(--c5)', obj: 'var(--obj)', ink: 'var(--ink)', mut: 'var(--muted)' };
+var FIGS = {};
+
+FIGS.ex1 = function () {
+  var p = new Plot({ x0: -4, x1: 5, y0: -4, y1: 4 }, { unit: 30, alt: '直線 L0 向右平移得到 L1、L2、L3' });
+  var cols = [C.c1, C.c2, C.c3, C.c4], i;
+  for (i = 0; i < 4; i++) p.line(1, -1, i, { color: cols[i], legend: 'L' + sub(i) + '：x-y=' + i });
+  for (i = 1; i < 4; i++) p.pt(i, 0, { color: cols[i] });
+  return p.html('圖 3');
+};
+FIGS.pr1 = function () {
+  var p = new Plot({ x0: -5, x1: 4, y0: -4, y1: 4 }, { unit: 30, alt: '直線 L0 向左平移得到 L4、L5、L6' });
+  p.line(1, -1, 0, { color: C.c1, legend: 'L₀：x-y=0' });
+  var cols = [C.c2, C.c3, C.c4], i;
+  for (i = 1; i <= 3; i++) {
+    p.line(1, -1, -i, { color: cols[i - 1], legend: 'L' + sub(i + 3) + '：x-y=-' + i });
+    p.pt(-i, 0, { color: cols[i - 1] });
+  }
+  return p.html();
+};
+FIGS.ex2 = function () {
+  var p = new Plot({ x0: -1, x1: 4, y0: -2, y1: 7 }, { unit: 36, noXT: true, alt: '三條直線 2x+y=2、4、6 與 x 軸的交點' });
+  var cols = [C.c1, C.c2, C.c3], i;
+  for (i = 1; i <= 3; i++) {
+    p.line(2, 1, 2 * i, { color: cols[i - 1], legend: 'L' + sub(i) + '：2x+y=' + (2 * i) });
+    p.pt(i, 0, { color: C.ink, label: '(' + i + ', 0)', dx: 0, dy: 19, anchor: 'middle' });
+  }
+  return p.html('圖 6');
+};
+FIGS.pr2 = function () {
+  var p = new Plot({ x0: -1, x1: 4, y0: -2, y1: 7 }, { unit: 36, alt: '三條直線 2x+y=2、4、6 與 y 軸的交點' });
+  var cols = [C.c1, C.c2, C.c3], i;
+  for (i = 1; i <= 3; i++) {
+    p.line(2, 1, 2 * i, { color: cols[i - 1], legend: 'L' + sub(i) + '：2x+y=' + (2 * i) });
+    p.pt(0, 2 * i, { color: C.ink, label: '(0, ' + (2 * i) + ')', dx: 8, dy: 4 });
+  }
+  return p.html();
+};
+FIGS.half4 = function () {
+  var up = [{ a: -1, b: -1, c: -2 }], lo = [{ a: 1, b: 1, c: 2 }];
+  function panel(sh, strict, cap, e) {
+    var p = new Plot({ x0: -2, x1: 5, y0: -2, y1: 5 }, { unit: 22, alt: '不等式 ' + cap + ' 的圖形' });
+    p.shade(sh, { op: 0.55 });
+    p.line(1, 1, 2, { color: C.c1, dash: strict, w: 2.4 });
+    if (e) p.text(sh === up ? 3.3 : -0.9, sh === up ? 3.3 : -0.9, e, { color: C.ink });
+    return p.html('<span style="font-size:.95rem;color:var(--ink)">' + htmlSym(cap) + '</span>');
+  }
+  return '<div class="fig-row">' +
+    panel(up, true, 'x+y>2', 'E₁') + panel(up, false, 'x+y≥2') +
+    panel(lo, false, 'x+y≤2') + panel(lo, true, 'x+y<2', 'E₂') + '</div>';
+};
+FIGS.ex3 = function () {
+  var v = { x0: -6, x1: 5, y0: -4, y1: 5 };
+  var c1 = { a: 1, b: -2, c: -2 }, c2 = { a: -1, b: -1, c: 2 };
+  var p1 = new Plot(v, { unit: 20, alt: '圖 9：x-2y+2≤0' });
+  p1.shade([c1], { op: 0.45 });
+  p1.line(1, -2, -2, { color: C.c1, legend: 'L₁：x-2y+2=0' });
+  var p2 = new Plot(v, { unit: 20, alt: '圖 10：x+y+2>0' });
+  p2.shade([c2], { op: 0.45 });
+  p2.line(1, 1, -2, { color: C.c3, dash: true, legend: 'L₂：x+y+2=0' });
+  var p3 = new Plot(v, { unit: 20, alt: '圖 11：聯立不等式的共同部分' });
+  p3.shade([c1, c2], { op: 0.7 });
+  p3.line(1, -2, -2, { color: C.c1, legend: 'L₁（實線）' });
+  p3.line(1, 1, -2, { color: C.c3, dash: true, legend: 'L₂（虛線）' });
+  p3.pt(-2, 0, { open: true, color: C.c3, label: '(-2, 0)', dx: -6, dy: -9, anchor: 'end' });
+  return '<div class="fig-row">' + p1.html('圖 9') + p2.html('圖 10') + p3.html('圖 11　深色為共同部分') + '</div>';
+};
+FIGS.pr3 = function () {
+  var v = { x0: -4, x1: 5, y0: -4, y1: 4 };
+  var a = { a: 2, b: -1, c: 2 }, b = { a: -1, b: -3, c: -3 };
+  var p1 = new Plot(v, { unit: 26, alt: '2x-y-2≤0 的圖形' });
+  p1.shade([a], { op: 0.5 });
+  p1.line(2, -1, 2, { color: C.c1, legend: '2x-y-2=0' });
+  p1.pt(1, 0, { label: '(1, 0)', dx: 8, dy: 16 });
+  p1.pt(0, -2, { label: '(0, -2)', dx: 8, dy: 4 });
+  var p2 = new Plot(v, { unit: 26, alt: '聯立不等式的圖形' });
+  p2.shade([a, b], { op: 0.7 });
+  p2.line(2, -1, 2, { color: C.c1, legend: '2x-y-2=0（實線）' });
+  p2.line(1, 3, 3, { color: C.c3, dash: true, legend: 'x+3y-3=0（虛線）' });
+  p2.pt(9 / 7, 4 / 7, { open: true, color: C.c3, label: '(9/7, 4/7)', dx: 8, dy: 20 });
+  return '<div class="fig-row">' + p1.html('(1)') + p2.html('(2)　深色為共同部分') + '</div>';
+};
+FIGS.hw1 = function () {
+  var p = new Plot({ x0: -4, x1: 10, y0: -8, y1: 8 }, { unit: 22, alt: '聯立不等式 3x+2y-12≤0 且 x+y-2>0 的圖形' });
+  p.shade([{ a: 3, b: 2, c: 12 }, { a: -1, b: -1, c: -2 }], { op: 0.6 });
+  p.line(3, 2, 12, { color: C.c1, legend: '3x+2y=12（實線）' });
+  p.line(1, 1, 2, { color: C.c3, dash: true, legend: 'x+y=2（虛線）' });
+  p.pt(8, -6, { open: true, color: C.ink, label: '(8, -6)', dx: 8, dy: 4 });
+  return p.html();
+};
+FIGS.hw2 = function () {
+  var p = new Plot({ x0: -2, x1: 8, y0: -1, y1: 5 }, { unit: 36, alt: '深色區域由一條實線與一條虛線圍成' });
+  p.shade([{ a: 2, b: 3, c: 12 }, { a: -1, b: 3, c: 3 }], { op: 0.7 });
+  p.line(2, 3, 12, { color: C.c4 });
+  p.line(1, -3, -3, { color: C.c3, dash: true });
+  p.pt(0, 1, { open: true, color: C.c3, label: '(0, 1)', dx: -8, dy: 16, anchor: 'end' });
+  p.pt(3, 2, { open: true, color: C.c3, label: '(3, 2)', dx: -4, dy: -10, anchor: 'end' });
+  p.pt(6, 0, { color: C.c4, label: '(6, 0)', dx: 4, dy: -9, anchor: 'middle' });
+  return p.html();
+};
+FIGS.hw4 = function () {
+  var p = new Plot({ x0: -1, x1: 6, y0: -1, y1: 7 }, { unit: 30, plain: true, noO: false, alt: '四點 A、B、C、D 與直線 L：x-2y=0' });
+  p.line(1, -2, 0, { color: C.c1, legend: 'L：x-2y=0' });
+  p.pt(1, 3, { label: 'A', dx: -8, dy: 16, anchor: 'end' });
+  p.pt(1, 5, { label: 'B', dx: -8, dy: -4, anchor: 'end' });
+  p.pt(3, 5, { label: 'C', dx: 8, dy: -4 });
+  p.pt(3, 3, { label: 'D', dx: 8, dy: 16 });
+  return p.html('坐標為示意');
+};
+FIGS.hw4s = function () {
+  var p = new Plot({ x0: -1, x1: 6, y0: -1, y1: 7 }, { unit: 30, plain: true, alt: '過四點作 L 的平行線，過 D 的最靠右下' });
+  p.line(1, -2, 0, { color: C.c1, legend: 'L：x-2y=0' });
+  [-5, -9, -7].forEach(function (k) { p.line(1, -2, k, { color: C.mut, dash: true, w: 1.6, op: 0.9 }); });
+  p.leg.push({ text: '過 A、B、C 的平行線', color: C.mut, dash: true });
+  p.line(1, -2, -3, { color: C.obj, dash: true, w: 2.6, legend: '過 D 的平行線（k 最大）' });
+  p.pt(1, 3, { label: 'A', dx: -8, dy: 16, anchor: 'end' });
+  p.pt(1, 5, { label: 'B', dx: -8, dy: -4, anchor: 'end' });
+  p.pt(3, 5, { label: 'C', dx: 8, dy: -4 });
+  p.pt(3, 3, { label: 'D', dx: 8, dy: 16, color: C.obj });
+  return p.html('坐標為示意，比較的是平行線的相對位置');
+};
+FIGS.hw5 = function () {
+  var p = new Plot({ x0: -1, x1: 4, y0: -1, y1: 4 }, { unit: 44, alt: '三角形區域內的格子點共 7 個' });
+  p.shade([{ a: 3, b: 2, c: 6 }, { a: -1, b: 0, c: 0 }, { a: 0, b: -1, c: 0 }], { op: 0.5 });
+  p.line(3, 2, 6, { color: C.c1, legend: '3x+2y=6' });
+  var x, y, n = 0;
+  for (x = 0; x <= 3; x++) for (y = 0; y <= 3; y++) {
+    if (3 * x + 2 * y <= 6) { p.pt(x, y, { color: C.obj, r: 5 }); n++; }
+    else p.pt(x, y, { color: C.mut, r: 2.5 });
+  }
+  return p.html('橘色點為滿足條件的整數點，共 ' + n + ' 個');
+};
+FIGS.hw6 = function () {
+  var p = new Plot({ x0: -4, x1: 4, y0: -4, y1: 5 }, { unit: 30, plain: true, alt: '三條向右上方傾斜的平行線 L1、L2、L3' });
+  p.line(-2, 1, -4, { color: C.c1, legend: 'L₁' });
+  p.line(-2, 1, 1, { color: C.c2, legend: 'L₂' });
+  p.line(-2, 1, 4, { color: C.c3, legend: 'L₃' });
+  return p.html('示意圖');
+};
+var S3 = Math.sqrt(3);
+function hexPts() { return [[-1, 0], [1, 0], [2, S3], [1, 2 * S3], [-1, 2 * S3], [-2, S3]]; }
+function hexBase(alt) {
+  var p = new Plot({ x0: -3, x1: 3, y0: -1, y1: 4.5 }, { unit: 44, plain: true, alt: alt });
+  var h = hexPts();
+  p.segs(h, { color: C.c1, fill: 'var(--region)', fop: 0.4, w: 2.2 });
+  p.pt(-1, 0, { label: 'A', dx: -8, dy: 16, anchor: 'end', color: C.ink });
+  p.pt(1, 0, { label: 'B', dx: 8, dy: 16, color: C.ink });
+  p.pt(2, S3, { label: 'C', dx: 9, dy: 5, color: C.ink });
+  p.pt(1, 2 * S3, { label: 'D', dx: 8, dy: -6, color: C.ink });
+  p.pt(-1, 2 * S3, { label: 'E', dx: -8, dy: -6, anchor: 'end', color: C.ink });
+  p.pt(-2, S3, { label: 'F', dx: -9, dy: 5, anchor: 'end', color: C.ink });
+  return p;
+}
+FIGS.hw7 = function () { return hexBase('正六邊形 ABCDEF，A、B 在 x 軸上').html(); };
+FIGS.hw7s = function () {
+  var p = hexBase('平行線 3x-2y=k 通過 B 時 k 最大');
+  p.line(3, -2, 3, { color: C.obj, w: 2.6, legend: 'k=3（過 B，最大）' });
+  p.line(3, -2, 6 - 2 * S3, { color: C.mut, dash: true, w: 1.8, legend: 'k=6-2√3≈2.54（過 C）' });
+  return p.html();
+};
+FIGS.hw9 = function () {
+  var A = [4, 1], B = [21, 35], Cc = [-23 / 7, 75 / 7];
+  var p = new Plot({ x0: -6, x1: 24, y0: -4, y1: 38 }, { unit: 9.5, step: 5, lstep: 10, alt: '三角形 ABC 與直線 AB 上的兩點 (5,3)、(7,7)' });
+  p.shade([{ a: 2, b: -1, c: 7 }, { a: -1, b: 1, c: 14 }, { a: -4, b: -3, c: -19 }], { op: 0.5 });
+  p.line(2, -1, 7, { color: C.obj, w: 2.6, legend: 'AB：2x-y-7=0' });
+  p.line(1, -1, -14, { color: C.c1, legend: 'BC：x-y+14=0' });
+  p.line(4, 3, 19, { color: C.c2, legend: 'CA：4x+3y=19' });
+  p.pt(A[0], A[1], { label: 'A', dx: 8, dy: 14, color: C.ink });
+  p.pt(B[0], B[1], { label: 'B', dx: 8, dy: 4, color: C.ink });
+  p.pt(Cc[0], Cc[1], { label: 'C', dx: -9, dy: 4, anchor: 'end', color: C.ink });
+  p.pt(5, 3, { label: '(5, 3)', dx: 9, dy: 14, color: C.c4 });
+  p.pt(7, 7, { label: '(7, 7)', dx: 9, dy: 4, color: C.c4 });
+  return p.html();
+};
+
+/* ---------- LP widget ---------- */
+function LP(el, cfg) {
+  var self = this, id = 'lpk' + (++uid);
+  this.cfg = cfg;
+  this.cons = cfg.cons.map(normCon);
+  this.f = function (x, y) { return cfg.obj.a * x + cfg.obj.b * y; };
+  this.vals = cfg.pts.map(function (p) { return self.f(p.x, p.y); });
+  this.k = cfg.k0;
+  el.innerHTML = '<div class="lp"><div class="lp-fig"></div><div class="lp-ctl">' +
+    '<div class="readout" aria-live="polite"></div>' +
+    '<div class="slider-row"><label for="' + id + '">拖曳目標函數的值（橘色虛線會跟著平行移動）</label>' +
+    '<input type="range" id="' + id + '" min="' + cfg.kmin + '" max="' + cfg.kmax + '" step="any" value="' + cfg.k0 + '"></div>' +
+    '<div><p class="chips-h">代入頂點，直接跳到該值：</p><div class="chips"></div></div></div></div>';
+  this.fig = el.querySelector('.lp-fig');
+  this.out = el.querySelector('.readout');
+  this.slider = el.querySelector('input');
+  this.chipBox = el.querySelector('.chips');
+  this.chips = cfg.pts.map(function (p, i) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'chip'; b.setAttribute('aria-pressed', 'false');
+    b.textContent = (p.chip || p.label).replace(/-/g, MINUS) + ' → ' + fmt(self.vals[i]);
+    b.addEventListener('click', function () { self.k = self.vals[i]; self.slider.value = self.k; self.update(); });
+    self.chipBox.appendChild(b);
+    return b;
+  });
+  this.slider.addEventListener('input', function () { self.k = parseFloat(self.slider.value); self.update(); });
+  this.update();
+}
+LP.prototype.update = function () {
+  var cfg = this.cfg, o = cfg.obj, k = this.k, self = this, i;
+  var goal = cfg.goal || 'both';
+  var p = new Plot(cfg.v, { unit: cfg.unit, step: cfg.step, lstep: cfg.lstep, noO: cfg.noO, alt: cfg.alt });
+  var poly = p.shade(this.cons, { op: 0.55 });
+  p.leg.push({ region: true, text: '可行解區域' });
+  cfg.cons.forEach(function (c) { if (!c.hide) p.line(c.a, c.b, c.c, { color: c.color || C.ink, legend: c.legend }); });
+  p.line(o.a, o.b, k, { color: C.obj, dash: true, w: 2.8, legend: o.label + ' = ' + fmt(k) });
+  var hit = -1;
+  for (i = 0; i < this.vals.length; i++) if (Math.abs(this.vals[i] - k) < 1e-6) hit = i;
+  cfg.pts.forEach(function (pt, j) {
+    if (j === hit) p.pt(pt.x, pt.y, { color: C.obj, r: 8 });
+  });
+  cfg.pts.forEach(function (pt) {
+    p.pt(pt.x, pt.y, { color: C.ink, label: pt.label, dx: pt.dx, dy: pt.dy, anchor: pt.anchor });
+  });
+  this.fig.innerHTML = p.html();
+
+  var vs = poly.map(function (q) { return self.f(q[0], q[1]); });
+  var mn = Math.min.apply(null, vs), mx = Math.max.apply(null, vs);
+  var pass = k >= mn - 1e-9 && k <= mx + 1e-9;
+  var maxV = Math.max.apply(null, this.vals), minV = Math.min.apply(null, this.vals);
+  var cls = '', st;
+  var eq = htmlSym(o.label) + ' = ' + fmt(k);
+  if (!pass) {
+    st = '直線 ' + eq + ' 沒有經過可行解區域，區域裡沒有任何可行解使目標函數等於這個值。';
+  } else {
+    cls = 'ok';
+    st = '直線 ' + eq + ' 經過可行解區域，線上的可行解都使目標函數等於 ' + fmt(k) + '。';
+  }
+  if (hit >= 0) {
+    var m = /^([A-Z])\(/.exec(cfg.pts[hit].label);
+    st += ' 此時恰好通過頂點 ' + (m ? '<i>' + m[1] + '</i>' : esc(cfg.pts[hit].label).replace(/-/g, MINUS)) + '。';
+  }
+  if (hit >= 0 && (goal === 'max' || goal === 'both') && Math.abs(k - maxV) < 1e-6) {
+    cls = 'hit'; st = '這是最大值：' + htmlSym(cfg.name || 'k') + ' 再變大，直線就離開可行解區域。';
+  } else if (hit >= 0 && (goal === 'min' || goal === 'both') && Math.abs(k - minV) < 1e-6) {
+    cls = 'hit'; st = '這是最小值：' + htmlSym(cfg.name || 'k') + ' 再變小，直線就離開可行解區域。';
+  }
+  var big = '<span class="big">' + htmlSym(cfg.name || 'k') + ' = ' + htmlSym(o.label) + ' = ' + fmt(k) + (cfg.unit2 || '') + '</span>';
+  var extra = cfg.extra ? '<span class="st">' + cfg.extra(k) + '</span>' : '';
+  this.out.innerHTML = big + extra + '<span class="st ' + cls + '">' + st + '</span>';
+  this.chips.forEach(function (b, j) { b.setAttribute('aria-pressed', Math.abs(self.vals[j] - k) < 1e-6 ? 'true' : 'false'); });
+};
+
+/* ---------- LP configurations ---------- */
+function le(a, b, c, extra) { var o = { a: a, b: b, c: c, op: '<=' }; for (var k in extra) o[k] = extra[k]; return o; }
+function ge(a, b, c, extra) { var o = { a: a, b: b, c: c, op: '>=' }; for (var k in extra) o[k] = extra[k]; return o; }
+var NX = ge(1, 0, 0, { hide: true }), NY = ge(0, 1, 0, { hide: true });
+var CFG = {
+  intro: {
+    v: { x0: -10, x1: 115, y0: -10, y1: 115 }, unit: 3.4, step: 10, lstep: 20, noO: true,
+    alt: '五邊形可行解區域與目標函數 0.3x+0.7y 的平行線',
+    cons: [NX, NY, le(1, 0, 100, { color: C.c2, legend: 'x=100' }), le(0, 1, 100, { color: C.c5, legend: 'y=100' }), le(1, 1, 150, { color: C.c1, legend: 'x+y=150' })],
+    obj: { a: 0.3, b: 0.7, label: '0.3x+0.7y' }, name: '學期成績', kmin: 0, kmax: 100, k0: 40, goal: 'max',
+    pts: [
+      { x: 0, y: 0, label: '(0, 0)', dx: 6, dy: 16 },
+      { x: 100, y: 0, label: '(100, 0)', dx: 0, dy: 17, anchor: 'middle' },
+      { x: 100, y: 50, label: '(100, 50)', dx: 9, dy: 4 },
+      { x: 50, y: 100, label: '(50, 100)', dx: 0, dy: -10, anchor: 'middle' },
+      { x: 0, y: 100, label: '(0, 100)', dx: 8, dy: -8 }
+    ]
+  },
+  p15: {
+    v: { x0: -4, x1: 8, y0: -2, y1: 6 }, unit: 32, step: 1, lstep: 2, alt: '三角形 ABC 的可行解區域與平行線 x+y=k',
+    cons: [ge(1, 2, 6, { color: C.c1, legend: 'x+2y=6' }), le(1, -1, 2, { color: C.c2, legend: 'x-y=2' }), le(0, 1, 4, { color: C.c3, legend: 'y=4' })],
+    obj: { a: 1, b: 1, label: 'x+y' }, name: 'k', kmin: 0, kmax: 12, k0: 7, goal: 'both',
+    pts: [
+      { x: -2, y: 4, label: 'A(-2, 4)', dx: -7, dy: -9, anchor: 'end' },
+      { x: 6, y: 4, label: 'C(6, 4)', dx: 5, dy: -10, anchor: 'start' },
+      { x: 10 / 3, y: 4 / 3, label: 'B(10/3, 4/3)', dx: 9, dy: 20 }
+    ]
+  },
+  ex4: {
+    v: { x0: -1, x1: 5, y0: -1, y1: 5 }, unit: 44, step: 1, lstep: 1, noO: true, alt: '四邊形可行解區域與平行線 x+3y=k',
+    cons: [NX, NY, le(1, 2, 6, { color: C.c1, legend: 'x+2y=6' }), le(2, 1, 6, { color: C.c2, legend: '2x+y=6' })],
+    obj: { a: 1, b: 3, label: 'x+3y' }, name: 'k', kmin: -1, kmax: 11, k0: 5, goal: 'both',
+    pts: [
+      { x: 0, y: 0, label: 'O(0, 0)', dx: -7, dy: 17, anchor: 'end' },
+      { x: 3, y: 0, label: 'A(3, 0)', dx: 4, dy: 18, anchor: 'start' },
+      { x: 2, y: 2, label: 'B(2, 2)', dx: 9, dy: -5 },
+      { x: 0, y: 3, label: 'C(0, 3)', dx: 8, dy: -8 }
+    ]
+  },
+  pr4: {
+    v: { x0: -2, x1: 14, y0: -2, y1: 14 }, unit: 24, step: 2, lstep: 2, alt: '三角形可行解區域與平行線 2x+y=k',
+    cons: [ge(1, 1, 10, { color: C.c1, legend: 'x+y=10' }), le(1, -1, 0, { color: C.c2, legend: 'x-y=0' }), le(0, 1, 10, { color: C.c3, legend: 'y=10' })],
+    obj: { a: 2, b: 1, label: '2x+y' }, name: 'k', kmin: 0, kmax: 34, k0: 20, goal: 'both',
+    pts: [
+      { x: 5, y: 5, label: '(5, 5)', dx: 9, dy: 14 },
+      { x: 0, y: 10, label: '(0, 10)', dx: 9, dy: -8 },
+      { x: 10, y: 10, label: '(10, 10)', dx: 8, dy: -9 }
+    ]
+  },
+  ex5: {
+    v: { x0: -2, x1: 18, y0: -2, y1: 22 }, unit: 17, step: 2, lstep: 4, alt: '例題 5 的可行解區域與平行線 25x+12y=k',
+    cons: [NX, NY, le(5, 4, 80, { color: C.c1, legend: '5x+4y=80' }), le(3, 1, 30, { color: C.c2, legend: '3x+y=30' })],
+    obj: { a: 25, b: 12, label: '25x+12y' }, name: 'P', kmin: 0, kmax: 320, k0: 150, goal: 'max', unit2: ' 公斤',
+    pts: [
+      { x: 0, y: 0, label: '(0, 0)', dx: 6, dy: 17 },
+      { x: 10, y: 0, label: '(10, 0)', dx: 0, dy: 18, anchor: 'middle' },
+      { x: 40 / 7, y: 90 / 7, label: '(40/7, 90/7)', dx: 10, dy: -8, chip: '(40/7, 90/7)' },
+      { x: 0, y: 20, label: '(0, 20)', dx: 8, dy: -6 }
+    ]
+  },
+  pr5: {
+    v: { x0: -2, x1: 22, y0: -2, y1: 34 }, unit: 12, step: 2, lstep: 4, alt: '隨堂練習：合金獲利的可行解區域',
+    cons: [NX, NY, le(5, 2, 90, { color: C.c1, legend: '5x+2y=90' }), le(1, 1, 30, { color: C.c2, legend: 'x+y=30' })],
+    obj: { a: 50, b: 30, label: '50x+30y' }, name: 'P', kmin: 0, kmax: 1200, k0: 600, goal: 'max', unit2: ' 元',
+    pts: [
+      { x: 0, y: 0, label: '(0, 0)', dx: 6, dy: 17 },
+      { x: 18, y: 0, label: '(18, 0)', dx: 0, dy: 18, anchor: 'middle' },
+      { x: 10, y: 20, label: '(10, 20)', dx: 9, dy: -6 },
+      { x: 0, y: 30, label: '(0, 30)', dx: 8, dy: -6 }
+    ]
+  },
+  ex6: {
+    v: { x0: -1, x1: 10, y0: -1, y1: 12 }, unit: 30, step: 1, lstep: 2, noO: true, alt: '無界的可行解區域與平行線 6x+4y=k',
+    cons: [NX, NY, ge(1, 2, 8, { color: C.c1, legend: 'x+2y=8' }), ge(2, 1, 10, { color: C.c2, legend: '2x+y=10' })],
+    obj: { a: 6, b: 4, label: '6x+4y' }, name: 'P（萬元）', kmin: 0, kmax: 60, k0: 50, goal: 'min',
+    pts: [
+      { x: 0, y: 10, label: '(0, 10)', dx: 8, dy: -7 },
+      { x: 4, y: 2, label: '(4, 2)', dx: 9, dy: -7 },
+      { x: 8, y: 0, label: '(8, 0)', dx: 0, dy: 18, anchor: 'middle' }
+    ]
+  },
+  pr6: {
+    v: { x0: -1, x1: 12, y0: -1, y1: 10 }, unit: 30, step: 1, lstep: 2, noO: true, alt: '無界的可行解區域與平行線 x+2y=k',
+    cons: [NX, NY, ge(2, 1, 8, { color: C.c1, legend: '2x+y=8' }), ge(2, 7, 20, { color: C.c2, legend: '2x+7y=20' })],
+    obj: { a: 1, b: 2, label: 'x+2y' }, name: 'C（萬元）', kmin: 0, kmax: 20, k0: 14, goal: 'min',
+    pts: [
+      { x: 0, y: 8, label: '(0, 8)', dx: 8, dy: -7 },
+      { x: 3, y: 2, label: '(3, 2)', dx: 9, dy: -7 },
+      { x: 10, y: 0, label: '(10, 0)', dx: 0, dy: 18, anchor: 'middle' }
+    ]
+  },
+  hw8: {
+    v: { x0: -5, x1: 48, y0: -5, y1: 58 }, unit: 7.6, step: 5, lstep: 10, alt: '五邊形可行解區域與平行線 150x+100y=g',
+    cons: [NX, NY, le(1, 0, 40, { color: C.c2, legend: 'x=40' }), le(0, 1, 50, { color: C.c5, legend: 'y=50' }),
+      le(1, 1, 50, { color: C.c1, legend: 'x+y=50' }), ge(1, 1, 30, { color: C.c3, legend: 'x+y=30' })],
+    obj: { a: 150, b: 100, label: '150x+100y' }, name: 'g', kmin: 0, kmax: 8000, k0: 4000, goal: 'max',
+    extra: function (k) { return '運費 C = 61000 ' + MINUS + ' g = ' + fmt(61000 - k) + ' 元'; },
+    pts: [
+      { x: 0, y: 30, label: '(0, 30)', dx: 8, dy: 5 },
+      { x: 0, y: 50, label: '(0, 50)', dx: 8, dy: -8 },
+      { x: 40, y: 10, label: '(40, 10)', dx: 8, dy: -8 },
+      { x: 40, y: 0, label: '(40, 0)', dx: -2, dy: 17, anchor: 'middle' },
+      { x: 30, y: 0, label: '(30, 0)', dx: -2, dy: 17, anchor: 'middle' }
+    ]
+  },
+  hw10: {
+    v: { x0: -2, x1: 30, y0: -2, y1: 46 }, unit: 10, step: 2, lstep: 6, alt: '無界的可行解區域與平行線 5x+4y=k',
+    cons: [NX, NY, ge(7, 2, 84, { color: C.c1, legend: '7x+2y=84' }), ge(1, 2, 24, { color: C.c2, legend: 'x+2y=24' }), ge(3, 2, 60, { color: C.c4, legend: '3x+2y=60' })],
+    obj: { a: 5, b: 4, label: '5x+4y' }, name: 'C', kmin: 0, kmax: 250, k0: 150, goal: 'min', unit2: ' 元',
+    pts: [
+      { x: 0, y: 42, label: '(0, 42)', dx: 8, dy: -4 },
+      { x: 6, y: 21, label: '(6, 21)', dx: 9, dy: -4 },
+      { x: 18, y: 3, label: '(18, 3)', dx: 8, dy: -8 },
+      { x: 24, y: 0, label: '(24, 0)', dx: 0, dy: 18, anchor: 'middle' }
+    ]
+  }
+};
+
+/* ---------- parallel family tool ---------- */
+function Family(el) {
+  var self = this, id = 'fam' + (++uid);
+  this.s = { a: 1, b: -1, c: 0 };
+  el.innerHTML = '<div class="tool"><div class="tool-fig"></div><div class="tool-ctl">' +
+    '<div class="tool-title">動手試試：拖曳常數項，看平行直線系</div>' +
+    '<div><p class="chips-h">選一組係數：</p><div class="chips">' +
+    '<button type="button" class="chip" data-a="1" data-b="-1">x−y=c（例題 1）</button>' +
+    '<button type="button" class="chip" data-a="2" data-b="1">2x+y=c（例題 2）</button>' +
+    '<button type="button" class="chip" data-a="1" data-b="1">x+y=c（圖 5）</button></div></div>' +
+    '<div class="row"><input class="num" type="number" step="1" id="' + id + 'a" value="1" aria-label="x 的係數 a"> <span><i>x</i> +</span>' +
+    '<input class="num" type="number" step="1" id="' + id + 'b" value="-1" aria-label="y 的係數 b"> <span><i>y</i> = <i>c</i></span></div>' +
+    '<div class="slider-row"><label for="' + id + 'c">常數項 c（淡色線是 c 為整數時的所有直線）</label>' +
+    '<input type="range" id="' + id + 'c" min="-8" max="8" step="1" value="0"></div>' +
+    '<div class="readout" aria-live="polite"></div></div></div>';
+  this.fig = el.querySelector('.tool-fig');
+  this.out = el.querySelector('.readout');
+  this.ia = el.querySelector('#' + id + 'a');
+  this.ib = el.querySelector('#' + id + 'b');
+  this.ic = el.querySelector('#' + id + 'c');
+  this.chips = el.querySelectorAll('.chip');
+  function read() {
+    var a = parseFloat(self.ia.value), b = parseFloat(self.ib.value);
+    if (isNaN(a)) a = 0; if (isNaN(b)) b = 0;
+    self.s = { a: a, b: b, c: parseFloat(self.ic.value) };
+    self.update();
+  }
+  this.ia.addEventListener('input', read);
+  this.ib.addEventListener('input', read);
+  this.ic.addEventListener('input', read);
+  Array.prototype.forEach.call(this.chips, function (ch) {
+    ch.addEventListener('click', function () {
+      self.ia.value = ch.getAttribute('data-a'); self.ib.value = ch.getAttribute('data-b'); read();
+    });
+  });
+  read();
+}
+Family.prototype.update = function () {
+  var s = this.s, a = s.a, b = s.b, c = s.c, i;
+  var p = new Plot({ x0: -6, x1: 6, y0: -6, y1: 6 }, { unit: 27, alt: '平行直線系：係數固定，常數項改變' });
+  if (a === 0 && b === 0) {
+    this.fig.innerHTML = p.html();
+    this.out.innerHTML = '係數 <i>a</i>、<i>b</i> 不能同時為 0。';
+    return;
+  }
+  for (i = -8; i <= 8; i++) if (i !== c) p.line(a, b, i, { color: C.c1, w: 1.3, op: 0.4 });
+  p.line(a, b, c, { color: C.obj, w: 3, legend: lin(a, b) + ' = ' + fmt(c) });
+  var xi = null, yi = null;
+  if (a !== 0) { xi = c / a; if (Math.abs(xi) <= 6) p.pt(xi, 0, { color: C.obj, label: '(' + fmt(xi) + ', 0)', dx: 6, dy: -8 }); }
+  if (b !== 0) { yi = c / b; if (Math.abs(yi) <= 6) p.pt(0, yi, { color: C.obj, label: '(0, ' + fmt(yi) + ')', dx: 8, dy: 4 }); }
+  this.fig.innerHTML = p.html();
+  var slope = b === 0 ? '無（鉛直線）' : frac(-a, b);
+  this.out.innerHTML = '<span class="big">' + htmlSym(lin(a, b) + ' = ' + fmt(c)) + '</span>' +
+    '<span class="st">斜率 ' + slope + '　　<i>x</i> 截距 ' + (a === 0 ? '無' : frac(c, a)) + '　　<i>y</i> 截距 ' + (b === 0 ? '無' : frac(c, b)) + '</span>' +
+    '<span class="st">斜率只由 <i>a</i>、<i>b</i> 決定，所以拖曳 <i>c</i> 時，直線只平移、不轉動。</span>';
+};
+
+/* ---------- inequality tool ---------- */
+function Ineq(el) {
+  var self = this, id = 'inq' + (++uid);
+  var colors = [C.c1, C.c3];
+  this.rows = [{ on: true, a: 1, b: -2, c: 2, op: 'le' }, { on: true, a: 1, b: 1, c: 2, op: 'gt' }];
+  var presets = [
+    { n: '例題 3(1)', r: [[1, 1, -2, 2, 'le'], [0, 1, 1, 2, 'gt']] },
+    { n: '例題 3(2)', r: [[1, 1, -2, 2, 'le'], [1, 1, 1, 2, 'gt']] },
+    { n: '隨堂 (2)', r: [[1, 2, -1, -2, 'le'], [1, 1, 3, -3, 'gt']] },
+    { n: '習題 1', r: [[1, 3, 2, -12, 'le'], [1, 1, 1, -2, 'gt']] }
+  ];
+  var html = '<div class="tool"><div class="tool-fig"></div><div class="tool-ctl">' +
+    '<div class="tool-title">畫圖器：輸入不等式，看半平面與共同部分</div>' +
+    '<div><p class="chips-h">載入課本題目：</p><div class="chips">' +
+    presets.map(function (p, i) { return '<button type="button" class="chip" data-p="' + i + '">' + p.n + '</button>'; }).join('') + '</div></div>';
+  [0, 1].forEach(function (i) {
+    html += '<div class="ineq-row"><div class="row"><label class="on"><input type="checkbox" id="' + id + 'on' + i + '"> 不等式 ' + (i + 1) +
+      ' <span class="swatch" style="--c:' + colors[i] + '"></span></label></div>' +
+      '<div class="row"><input class="num" type="number" step="1" id="' + id + 'a' + i + '" aria-label="x 的係數"> <span><i>x</i> +</span>' +
+      '<input class="num" type="number" step="1" id="' + id + 'b' + i + '" aria-label="y 的係數"> <span><i>y</i> +</span>' +
+      '<input class="num" type="number" step="1" id="' + id + 'c' + i + '" aria-label="常數項">' +
+      '<select class="sel" id="' + id + 'o' + i + '" aria-label="不等號"><option value="le">≤</option><option value="lt">&lt;</option><option value="ge">≥</option><option value="gt">&gt;</option></select><span>0</span></div>' +
+      '<div class="why" id="' + id + 'w' + i + '"></div></div>';
+  });
+  html += '</div></div>';
+  el.innerHTML = html;
+  this.fig = el.querySelector('.tool-fig');
+  this.id = id;
+  this.el = el;
+  this.colors = colors;
+  function bind() {
+    [0, 1].forEach(function (i) {
+      ['on', 'a', 'b', 'c', 'o'].forEach(function (k) {
+        el.querySelector('#' + id + k + i).addEventListener('input', function () { self.read(); });
+        el.querySelector('#' + id + k + i).addEventListener('change', function () { self.read(); });
+      });
+    });
+  }
+  this.push();
+  bind();
+  Array.prototype.forEach.call(el.querySelectorAll('[data-p]'), function (b) {
+    b.addEventListener('click', function () {
+      var pr = presets[parseInt(b.getAttribute('data-p'), 10)];
+      self.rows = pr.r.map(function (r) { return { on: !!r[0], a: r[1], b: r[2], c: r[3], op: r[4] }; });
+      self.push(); self.update();
+    });
+  });
+  this.update();
+}
+Ineq.prototype.push = function () {
+  var el = this.el, id = this.id;
+  this.rows.forEach(function (r, i) {
+    el.querySelector('#' + id + 'on' + i).checked = r.on;
+    el.querySelector('#' + id + 'a' + i).value = r.a;
+    el.querySelector('#' + id + 'b' + i).value = r.b;
+    el.querySelector('#' + id + 'c' + i).value = r.c;
+    el.querySelector('#' + id + 'o' + i).value = r.op;
+  });
+};
+Ineq.prototype.read = function () {
+  var el = this.el, id = this.id;
+  this.rows = [0, 1].map(function (i) {
+    function num(k) { var v = parseFloat(el.querySelector('#' + id + k + i).value); return isNaN(v) ? 0 : v; }
+    return { on: el.querySelector('#' + id + 'on' + i).checked, a: num('a'), b: num('b'), c: num('c'), op: el.querySelector('#' + id + 'o' + i).value };
+  });
+  this.update();
+};
+Ineq.prototype.update = function () {
+  var self = this, p = new Plot({ x0: -8, x1: 10, y0: -8, y1: 8 }, { unit: 21, step: 1, lstep: 2, alt: '不等式的半平面與共同部分' });
+  var OPS = { le: '≤', lt: '&lt;', ge: '≥', gt: '&gt;' };
+  var active = [];
+  this.rows.forEach(function (r, i) {
+    var why = self.el.querySelector('#' + self.id + 'w' + i);
+    if (!r.on) { why.innerHTML = '未啟用。'; return; }
+    if (r.a === 0 && r.b === 0) { why.innerHTML = '係數 <i>a</i>、<i>b</i> 不能同時為 0。'; return; }
+    var strict = r.op === 'lt' || r.op === 'gt';
+    var px = 0, py = 0;
+    if (r.c === 0) { if (r.a !== 0) { px = 1; py = 0; } else { px = 0; py = 1; } }
+    var val = r.a * px + r.b * py + r.c;
+    var sat = r.op === 'le' ? val <= 0 : r.op === 'lt' ? val < 0 : r.op === 'ge' ? val >= 0 : val > 0;
+    var con = (r.op === 'le' || r.op === 'lt') ? { a: r.a, b: r.b, c: -r.c } : { a: -r.a, b: -r.b, c: r.c };
+    active.push({ con: con, r: r, strict: strict, i: i });
+    why.innerHTML = '代入 ' + (px === 0 && py === 0 ? '原點 (0, 0)' : '(' + px + ', ' + py + ')（直線過原點，改取此點）') + '：' + htmlSym(fmt(val)) + ' ' + OPS[r.op] + ' 0 ' +
+      (sat ? '成立' : '不成立') + '，取' + (sat ? '含' : '不含') + '該點的半平面；' + (strict ? '不含等號，畫虛線。' : '含等號，畫實線。');
+  });
+  active.forEach(function (x) { p.shade([x.con], { op: active.length > 1 ? 0.2 : 0.5, fill: self.colors[x.i] }); });
+  if (active.length > 1) p.shade(active.map(function (x) { return x.con; }), { op: 0.6 });
+  active.forEach(function (x) {
+    var r = x.r;
+    p.line(r.a, r.b, -r.c, { color: self.colors[x.i], dash: x.strict, w: 2.4, legend: lin(r.a, r.b) + (r.c === 0 ? '' : (r.c > 0 ? '+' : MINUS) + fmt(Math.abs(r.c))) + ' ' + { le: '≤', lt: '<', ge: '≥', gt: '>' }[r.op] + ' 0' });
+  });
+  if (active.length > 1) {
+    var A = active[0].r, B = active[1].r, det = A.a * B.b - B.a * A.b;
+    if (Math.abs(det) > 1e-9) {
+      var cx = ((-A.c) * B.b - (-B.c) * A.b) / det, cy = (A.a * (-B.c) - B.a * (-A.c)) / det;
+      var strictAny = active[0].strict || active[1].strict;
+      if (Math.abs(cx) <= 8 && Math.abs(cy) <= 8) p.pt(cx, cy, { open: strictAny, color: C.ink, label: '(' + fmt(cx) + ', ' + fmt(cy) + ')', dx: 8, dy: -8 });
+    }
+  }
+  this.fig.innerHTML = p.html(active.length > 1 ? '深色為共同部分' : '');
+};
+
+/* ---------- page behaviour ---------- */
+function init() {
+  Array.prototype.forEach.call(document.querySelectorAll('[data-fig]'), function (el) {
+    var f = FIGS[el.getAttribute('data-fig')];
+    if (f) el.innerHTML = f();
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-lp]'), function (el) {
+    var c = CFG[el.getAttribute('data-lp')];
+    if (c) new LP(el, c);
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-tool="family"]'), function (el) { new Family(el); });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-tool="ineq"]'), function (el) { new Ineq(el); });
+
+  var details = Array.prototype.slice.call(document.querySelectorAll('details.sol'));
+  details.forEach(function (d) { d.setAttribute('data-default', d.hasAttribute('open') ? '1' : '0'); });
+  var btn = document.getElementById('toggleAll');
+  if (btn) btn.addEventListener('click', function () {
+    var openAll = btn.getAttribute('aria-pressed') !== 'true';
+    details.forEach(function (d) { d.open = openAll ? true : d.getAttribute('data-default') === '1'; });
+    btn.setAttribute('aria-pressed', openAll ? 'true' : 'false');
+    btn.textContent = openAll ? '收合練習解答' : '展開全部解答';
+  });
+
+  var links = Array.prototype.slice.call(document.querySelectorAll('.nav-links a'));
+  var secs = links.map(function (a) { return document.getElementById(a.getAttribute('href').slice(1)); });
+  var ticking = false;
+  function spy() {
+    ticking = false;
+    var cur = 0, i;
+    for (i = 0; i < secs.length; i++) if (secs[i] && secs[i].getBoundingClientRect().top <= 120) cur = i;
+    links.forEach(function (a, j) { if (j === cur) a.classList.add('on'); else a.classList.remove('on'); });
+  }
+  window.addEventListener('scroll', function () { if (!ticking) { ticking = true; requestAnimationFrame(spy); } }, { passive: true });
+  spy();
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+})();
+</script>
+
+</body></html>
